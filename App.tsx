@@ -19,6 +19,10 @@ const App: React.FC = () => {
   const [isCreatingStoryboard, setIsCreatingStoryboard] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const activeResults = mode === 'slideshow' ? slideshowResults : manualResults;
+  const generatedCount = activeResults.filter((item) => item.imageUrl).length;
+  const totalScenes = activeResults.length;
+
   useEffect(() => {
     const checkKey = async () => {
       if (window.aistudio) {
@@ -192,6 +196,11 @@ const App: React.FC = () => {
 
   return (
     <div className="app">
+      <div className="app__background">
+        <span className="app__orb app__orb--left" />
+        <span className="app__orb app__orb--right" />
+      </div>
+
       <header className="app__header">
         <div className="app__header-content">
           <div className="brand">
@@ -200,7 +209,11 @@ const App: React.FC = () => {
                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="brand__title">Consistency Studio</h1>
+            <div className="brand__text">
+              <p className="brand__eyebrow">Storyboard SaaS</p>
+              <h1 className="brand__title">Consistency Studio</h1>
+              <p className="brand__subtitle">Polished, Canva-grade visuals with locked-in characters.</p>
+            </div>
           </div>
 
           <div className="mode-toggle">
@@ -218,9 +231,14 @@ const App: React.FC = () => {
                 Manual Generation
               </button>
             </div>
+            <p className="mode-toggle__helper">Switch between AI storyboard or hands-on crafting.</p>
           </div>
 
           <div className="header-actions">
+            <div className="header-actions__meta">
+              <span className="pill pill--ghost">{references.length || '0'} references</span>
+              <span className="pill pill--ghost">{totalScenes || '0'} scenes</span>
+            </div>
             <div className="size-picker">
               <span>Res</span>
               <div className="size-picker__options">
@@ -244,6 +262,46 @@ const App: React.FC = () => {
       </header>
 
       <main className="app__body">
+        <section className="hero card card--gradient">
+          <div className="hero__left">
+            <div className="pill pill--glow">New • Brighter workspace</div>
+            <h2 className="hero__title">Design-grade layouts without the design gruntwork.</h2>
+            <p className="hero__subtitle">
+              Blend storyboard prompts, character references, and high-res rendering in one streamlined surface inspired by modern
+              creative tools.
+            </p>
+            <div className="hero__cta">
+              <button onClick={() => fileInputRef.current?.click()} className="primary-button primary-button--ghost">
+                Upload references
+              </button>
+              <button onClick={startGeneration} disabled={isGenerating || references.length === 0} className="primary-button">
+                {isGenerating ? 'Processing...' : 'Generate now'}
+              </button>
+            </div>
+          </div>
+          <div className="hero__right">
+            <div className="metric-tile">
+              <p className="metric-tile__label">Identity lock</p>
+              <p className="metric-tile__value">{references.length > 0 ? 'Ready' : 'Pending'}</p>
+              <p className="metric-tile__hint">{references.length > 0 ? 'Consistency secured' : 'Add 1-3 portraits'}</p>
+            </div>
+            <div className="metric-row">
+              <div className="metric-card">
+                <p className="metric-card__value">{generatedCount}</p>
+                <p className="metric-card__label">Rendered scenes</p>
+              </div>
+              <div className="metric-card">
+                <p className="metric-card__value">{size}</p>
+                <p className="metric-card__label">Resolution</p>
+              </div>
+              <div className="metric-card">
+                <p className="metric-card__value">{mode === 'slideshow' ? 'Auto' : 'Manual'}</p>
+                <p className="metric-card__label">Mode</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="sidebar custom-scrollbar">
           <section className="card">
             <div className="card__header">
