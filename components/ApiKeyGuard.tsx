@@ -7,9 +7,19 @@ interface ApiKeyGuardProps {
 const ApiKeyGuard: React.FC<ApiKeyGuardProps> = ({ onKeySelected }) => {
   const handleOpenKeySelector = async () => {
     try {
-      await window.aistudio.openSelectKey();
-      // Per instructions, assume success after triggering the dialog to avoid race conditions
-      onKeySelected();
+      if (window.aistudio) {
+        await window.aistudio.openSelectKey();
+        // Per instructions, assume success after triggering the dialog to avoid race conditions
+        onKeySelected();
+      } else {
+        // Fallback for local development
+        alert(
+          "Please set GEMINI_API_KEY environment variable. In AI Studio, use the API key selector."
+        );
+        console.warn(
+          "window.aistudio not available. Set GEMINI_API_KEY environment variable for local development."
+        );
+      }
     } catch (error) {
       console.error("Failed to open key selector", error);
     }

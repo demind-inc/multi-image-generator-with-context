@@ -1,11 +1,21 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { ReferenceImage, ImageSize, SlideContent } from "../types";
-import { DEFAULT_CHARACTER_PROMPT, MODEL_NAME, TEXT_MODEL_NAME, STORYBOARD_SYSTEM_INSTRUCTION } from "../constants.tsx";
+import {
+  DEFAULT_CHARACTER_PROMPT,
+  MODEL_NAME,
+  TEXT_MODEL_NAME,
+  STORYBOARD_SYSTEM_INSTRUCTION,
+} from "../constants.tsx";
 
-export async function generateSlideshowStructure(topic: string): Promise<SlideContent[]> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+export async function generateSlideshowStructure(
+  topic: string
+): Promise<SlideContent[]> {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("KEY_NOT_FOUND");
+  }
+  const ai = new GoogleGenAI({ apiKey });
+
   const response = await ai.models.generateContent({
     model: TEXT_MODEL_NAME,
     contents: `Create a 6-7 slide storyboard for the topic: "${topic}"`,
@@ -19,12 +29,16 @@ export async function generateSlideshowStructure(topic: string): Promise<SlideCo
           properties: {
             title: { type: Type.STRING },
             description: { type: Type.STRING },
-            prompt: { type: Type.STRING, description: "Illustration prompt for the boy in the orange shirt." }
+            prompt: {
+              type: Type.STRING,
+              description:
+                "Illustration prompt for the boy in the orange shirt.",
+            },
           },
-          required: ["title", "description", "prompt"]
-        }
-      }
-    }
+          required: ["title", "description", "prompt"],
+        },
+      },
+    },
   });
 
   try {
@@ -40,13 +54,17 @@ export async function generateCharacterScene(
   references: ReferenceImage[],
   size: ImageSize
 ): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  const referenceParts = references.map(ref => ({
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("KEY_NOT_FOUND");
+  }
+  const ai = new GoogleGenAI({ apiKey });
+
+  const referenceParts = references.map((ref) => ({
     inlineData: {
-      data: ref.data.split(',')[1],
-      mimeType: ref.mimeType
-    }
+      data: ref.data.split(",")[1],
+      mimeType: ref.mimeType,
+    },
   }));
 
   const fullPrompt = `
@@ -60,20 +78,17 @@ ${prompt}
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: {
-        parts: [
-          ...referenceParts,
-          { text: fullPrompt }
-        ]
+        parts: [...referenceParts, { text: fullPrompt }],
       },
       config: {
         imageConfig: {
           aspectRatio: "1:1",
-          imageSize: size
-        }
+          imageSize: size,
+        },
       },
     });
 
-    let imageUrl = '';
+    let imageUrl = "";
     if (response.candidates?.[0]?.content?.parts) {
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData) {
@@ -90,7 +105,7 @@ ${prompt}
     return imageUrl;
   } catch (error: any) {
     if (error.message?.includes("Requested entity was not found")) {
-        throw new Error("KEY_NOT_FOUND");
+      throw new Error("KEY_NOT_FOUND");
     }
     throw error;
   }
