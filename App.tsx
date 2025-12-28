@@ -1,14 +1,31 @@
-import React, { useState, useRef } from "react";
-import { ImageSize, SceneResult, ReferenceImage } from "./types";
+import React, { useState, useRef, useEffect } from "react";
+import { Session } from "@supabase/supabase-js";
+import {
+  ImageSize,
+  SceneResult,
+  ReferenceImage,
+  AccountProfile,
+} from "./types";
 import {
   generateCharacterScene,
   generateSlideshowStructure,
 } from "./services/geminiService";
+import { getCurrentSession, signOut, upsertProfile } from "./services/authService";
+import { getSupabaseClient } from "./services/supabaseClient";
 import "./App.scss";
 
 type AppMode = "slideshow" | "manual";
 
 const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<AccountProfile | null>(null);
+  const [authStatus, setAuthStatus] = useState<
+    "checking" | "signed_out" | "signed_in"
+  >("checking");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSendingLink, setIsSendingLink] = useState(false);
   const [mode, setMode] = useState<AppMode>("slideshow");
   const [topic, setTopic] = useState<string>("");
   const [manualPrompts, setManualPrompts] = useState<string>(
@@ -22,9 +39,57 @@ const App: React.FC = () => {
   const [isCreatingStoryboard, setIsCreatingStoryboard] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    const initialize = async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const { data: authListener } = supabase.auth.onAuthStateChange(
+          async (_event, newSession) => {
+            setSession(newSession);
+            if (newSession?.user) {
+              const savedProfile = await upsertProfile(newSession.user);
+              if (savedProfile) setProfile(savedProfile);
+              setAuthStatus("signed_in");
+            } else {
+              setProfile(null);
+              setAuthStatus("signed_out");
+            }
+          }
+        );
+        unsubscribe = () => authListener?.subscription.unsubscribe();
+
+        const currentSession = await getCurrentSession();
+
+        if (currentSession?.user) {
+          setSession(currentSession);
+          const savedProfile = await upsertProfile(currentSession.user);
+          if (savedProfile) setProfile(savedProfile);
+          setAuthStatus("signed_in");
+        } else {
+          setAuthStatus("signed_out");
+        }
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+        setAuthError(
+          "Unable to connect to authentication. Check Supabase keys."
+        );
+        setAuthStatus("signed_out");
+      }
+    };
+
+    initialize();
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
   const activeResults = mode === "slideshow" ? slideshowResults : manualResults;
   const generatedCount = activeResults.filter((item) => item.imageUrl).length;
   const totalScenes = activeResults.length;
+  const displayEmail = profile?.email || session?.user?.email || "";
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -44,6 +109,49 @@ const App: React.FC = () => {
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleSendMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthMessage(null);
+    setAuthError(null);
+
+    if (!authEmail.trim()) {
+      setAuthError("Please enter a valid email address.");
+      return;
+    }
+
+    setIsSendingLink(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: authEmail.trim(),
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setAuthMessage("Check your email for the magic sign-in link.");
+    } catch (error: any) {
+      console.error("Sign-in error:", error);
+      setAuthError(error.message || "Failed to start sign-in. Try again.");
+    } finally {
+      setIsSendingLink(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setAuthMessage(null);
+    } catch (error: any) {
+      console.error("Sign-out error:", error);
+      setAuthError(error.message || "Unable to sign out.");
+    }
   };
 
   const removeReference = (id: string) => {
@@ -214,6 +322,76 @@ const App: React.FC = () => {
     setIsGenerating(false);
   };
 
+  if (authStatus !== "signed_in") {
+    return (
+      <div className="auth-shell">
+        <div className="auth-card card card--gradient">
+          <div className="brand">
+            <div className="brand__icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h1 className="brand__title">Consistency Studio</h1>
+          </div>
+
+          <h2 className="auth-card__title">Sign in or create an account</h2>
+          <p className="auth-card__subtitle">
+            Use your email to get a Supabase magic link. We will save your
+            account details into the profiles table when you sign in.
+          </p>
+
+          <form className="auth-form" onSubmit={handleSendMagicLink}>
+            <label className="field-label" htmlFor="auth-email">
+              Work email
+            </label>
+            <input
+              id="auth-email"
+              type="email"
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="text-input"
+              required
+            />
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={isSendingLink}
+              style={{ width: "100%" }}
+            >
+              {isSendingLink ? "Sending link..." : "Send magic link"}
+            </button>
+          </form>
+
+          {authMessage && (
+            <div className="auth-alert auth-alert--success">{authMessage}</div>
+          )}
+          {authError && (
+            <div className="auth-alert auth-alert--error">{authError}</div>
+          )}
+          {authStatus === "checking" && !authError && (
+            <p className="helper-text" style={{ marginTop: "12px" }}>
+              Checking your session...
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <div className="app__background">
@@ -296,6 +474,21 @@ const App: React.FC = () => {
           </div>
 
           <div className="header-actions">
+            {displayEmail && (
+              <div className="account-chip">
+                <div className="account-chip__info">
+                  <span className="account-chip__label">Signed in</span>
+                  <span className="account-chip__email">{displayEmail}</span>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="account-chip__logout"
+                  title="Sign out"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
             <div className="header-actions__meta">
               <span className="pill pill--ghost" title="Reference images">
                 <svg

@@ -21,3 +21,11 @@ export interface ReferenceImage {
   data: string; // base64
   mimeType: string;
 }
+
+export interface AccountProfile {
+  id: string;
+  email: string | null;
+  full_name?: string | null;
+  last_sign_in_at?: string | null;
+  created_at?: string | null;
+}

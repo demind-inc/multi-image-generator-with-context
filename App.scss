@@ -1023,6 +1023,105 @@ body {
   color: #2563eb;
 }
 
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 50%, #fdf2f8 100%);
+}
+
+.auth-card {
+  max-width: 560px;
+  width: 100%;
+  padding: 28px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 24px 60px rgba(79, 70, 229, 0.16);
+}
+
+.auth-card__title {
+  margin: 12px 0 6px;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+
+.auth-card__subtitle {
+  margin: 0 0 12px;
+  color: #475569;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.auth-alert {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.auth-alert--success {
+  background: #ecfdf3;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.auth-alert--error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecdd3;
+}
+
+.account-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.account-chip__info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.account-chip__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.account-chip__email {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.account-chip__logout {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.account-chip__logout:hover {
+  background: #fee2e2;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
