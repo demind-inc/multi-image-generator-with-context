@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { AppMode, ImageSize } from "../../types";
 import "./AppHeader.scss";
 
@@ -29,6 +29,28 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onGenerate,
   disableGenerate,
 }) => {
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+
+    if (isAccountMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAccountMenuOpen]);
+
   return (
     <header className="app__header">
       <div className="app__header-content">
@@ -105,21 +127,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         <div className="header-actions">
-          {displayEmail && (
-            <div className="account-chip">
-              <div className="account-chip__info">
-                <span className="account-chip__label">Signed in</span>
-                <span className="account-chip__email">{displayEmail}</span>
-              </div>
-              <button
-                onClick={onSignOut}
-                className="account-chip__logout"
-                title="Sign out"
-              >
-                Sign out
-              </button>
-            </div>
-          )}
           <div className="header-actions__meta">
             <span className="pill pill--ghost" title="Reference images">
               <svg
@@ -242,6 +249,46 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               </>
             )}
           </button>
+          {displayEmail && (
+            <div className="account-menu" ref={accountMenuRef}>
+              <button
+                onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+                className="account-menu__trigger"
+                title="Account menu"
+                aria-label="Account menu"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </button>
+              {isAccountMenuOpen && (
+                <div className="account-menu__dropdown">
+                  <div className="account-menu__email">{displayEmail}</div>
+                  <button
+                    onClick={() => {
+                      onSignOut();
+                      setIsAccountMenuOpen(false);
+                    }}
+                    className="account-menu__signout"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>
