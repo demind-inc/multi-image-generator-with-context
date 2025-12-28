@@ -50,7 +50,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               />
             </svg>
           </div>
-          <h1 className="brand__title">Consistency Studio</h1>
+          <h1 className="brand__title">NanoGen AI</h1>
         </div>
 
         <div className="mode-toggle">
