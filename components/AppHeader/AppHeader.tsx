@@ -14,6 +14,9 @@ interface AppHeaderProps {
   isGenerating: boolean;
   onGenerate: () => void;
   disableGenerate: boolean;
+  usageRemaining?: number;
+  usageLimit?: number;
+  isUsageLoading?: boolean;
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
@@ -28,6 +31,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   isGenerating,
   onGenerate,
   disableGenerate,
+  usageRemaining,
+  usageLimit,
+  isUsageLoading,
 }) => {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
@@ -155,6 +161,29 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 />
               </svg>
               {totalScenes || "0"}
+            </span>
+            <span className="pill pill--ghost" title="Daily image limit">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                style={{ marginRight: "4px" }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {isUsageLoading
+                ? "..."
+                : usageLimit
+                ? `${usageRemaining ?? usageLimit}/${usageLimit}`
+                : "--/--"}
             </span>
           </div>
           <div className="size-picker">

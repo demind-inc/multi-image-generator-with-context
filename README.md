@@ -37,6 +37,20 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
    Ensure you have a `profiles` table with `id uuid primary key`, `email text`, `full_name text`, and `last_sign_in_at timestamptz`.
 
+   Add a `usage_limits` table to track daily image generation limits:
+
+   ```sql
+   create table public.usage_limits (
+     user_id uuid references auth.users not null,
+     usage_date date not null,
+     used integer not null default 0,
+     daily_limit integer not null default 10,
+     constraint usage_limits_pkey primary key (user_id, usage_date)
+   );
+   ```
+
+   The app will read the `daily_limit` from this table and defaults to 10 generations per day when inserting the current day's row.
+
 4. Run the app:
    ```bash
    npm run dev

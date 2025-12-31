@@ -11,6 +11,9 @@ interface HeroProps {
   disableGenerate: boolean;
   onUploadClick: () => void;
   onGenerate: () => void;
+  usageRemaining?: number;
+  usageLimit?: number;
+  isUsageLoading?: boolean;
 }
 
 const Hero: React.FC<HeroProps> = ({
@@ -22,6 +25,9 @@ const Hero: React.FC<HeroProps> = ({
   disableGenerate,
   onUploadClick,
   onGenerate,
+  usageRemaining,
+  usageLimit,
+  isUsageLoading,
 }) => {
   return (
     <section className="hero card card--gradient">
@@ -61,6 +67,16 @@ const Hero: React.FC<HeroProps> = ({
           </p>
         </div>
         <div className="metric-row">
+          <div className="metric-card">
+            <p className="metric-card__value">
+              {isUsageLoading
+                ? "..."
+                : usageLimit
+                ? `${usageRemaining ?? usageLimit}/${usageLimit}`
+                : "--/--"}
+            </p>
+            <p className="metric-card__label">Daily limit</p>
+          </div>
           <div className="metric-card">
             <p className="metric-card__value">{generatedCount}</p>
             <p className="metric-card__label">Rendered scenes</p>
