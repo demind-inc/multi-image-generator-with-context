@@ -12,7 +12,11 @@ import {
   generateSlideshowStructure,
 } from "../services/geminiService";
 import { useAuth } from "../providers/AuthProvider";
-import { getDailyUsage, recordGeneration } from "../services/usageService";
+import {
+  DEFAULT_DAILY_LIMIT,
+  getDailyUsage,
+  recordGeneration,
+} from "../services/usageService";
 import AppHeader from "../components/AppHeader/AppHeader";
 import Hero from "../components/Hero/Hero";
 import Sidebar from "../components/Sidebar/Sidebar";
@@ -82,6 +86,8 @@ const DashboardPage: React.FC = () => {
     references.length === 0 ||
     (!!usage && usage.remaining <= 0) ||
     !!usageError;
+  const displayUsageLimit = usage?.dailyLimit ?? DEFAULT_DAILY_LIMIT;
+  const displayUsageRemaining = usage?.remaining ?? DEFAULT_DAILY_LIMIT;
 
   const triggerUpload = () => fileInputRef.current?.click();
 
@@ -411,8 +417,8 @@ const DashboardPage: React.FC = () => {
         isGenerating={isGenerating}
         onGenerate={startGeneration}
         disableGenerate={disableGenerate}
-        usageRemaining={usage?.remaining}
-        usageLimit={usage?.dailyLimit}
+        usageRemaining={displayUsageRemaining}
+        usageLimit={displayUsageLimit}
         isUsageLoading={isUsageLoading}
       />
 
@@ -426,8 +432,8 @@ const DashboardPage: React.FC = () => {
           disableGenerate={disableGenerate}
           onUploadClick={triggerUpload}
           onGenerate={startGeneration}
-          usageRemaining={usage?.remaining}
-          usageLimit={usage?.dailyLimit}
+          usageRemaining={displayUsageRemaining}
+          usageLimit={displayUsageLimit}
           isUsageLoading={isUsageLoading}
         />
 

@@ -2,7 +2,7 @@ import { DailyUsage } from "../types";
 import { getSupabaseClient } from "./supabaseClient";
 
 const USAGE_TABLE = "usage_limits";
-const DEFAULT_DAILY_LIMIT = 10;
+export const DEFAULT_DAILY_LIMIT = 10;
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
