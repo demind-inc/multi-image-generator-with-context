@@ -31,3 +31,11 @@ export interface AccountProfile {
   last_sign_in_at?: string | null;
   created_at?: string | null;
 }
+
+export interface DailyUsage {
+  userId: string;
+  usageDate: string;
+  used: number;
+  dailyLimit: number;
+  remaining: number;
+}

@@ -1,20 +1,30 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppMode, ImageSize, ReferenceImage, SceneResult } from "../types";
+import {
+  AppMode,
+  DailyUsage,
+  ImageSize,
+  ReferenceImage,
+  SceneResult,
+} from "../types";
 import {
   generateCharacterScene,
   generateSlideshowStructure,
 } from "../services/geminiService";
 import { useAuth } from "../providers/AuthProvider";
+import {
+  DEFAULT_DAILY_LIMIT,
+  getDailyUsage,
+  recordGeneration,
+} from "../services/usageService";
 import AppHeader from "../components/AppHeader/AppHeader";
 import Hero from "../components/Hero/Hero";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Results from "../components/Results/Results";
 import Footer from "../components/Footer/Footer";
-import { useEffect } from "react";
 
 const DashboardPage: React.FC = () => {
-  const { authStatus, displayEmail, signOut } = useAuth();
+  const { session, authStatus, displayEmail, signOut } = useAuth();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<AppMode>("slideshow");
@@ -28,6 +38,9 @@ const DashboardPage: React.FC = () => {
   const [size, setSize] = useState<ImageSize>("1K");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingStoryboard, setIsCreatingStoryboard] = useState(false);
+  const [usage, setUsage] = useState<DailyUsage | null>(null);
+  const [isUsageLoading, setIsUsageLoading] = useState(false);
+  const [usageError, setUsageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Redirect to auth page if not authenticated
@@ -36,6 +49,13 @@ const DashboardPage: React.FC = () => {
       navigate("/auth", { replace: true });
     }
   }, [authStatus, navigate]);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (authStatus === "signed_in" && userId) {
+      refreshUsage(userId);
+    }
+  }, [authStatus, session?.user?.id]);
 
   // Show loading state while checking auth
   if (authStatus === "checking") {
@@ -61,7 +81,13 @@ const DashboardPage: React.FC = () => {
   const results = mode === "slideshow" ? slideshowResults : manualResults;
   const generatedCount = results.filter((item) => item.imageUrl).length;
   const totalScenes = results.length;
-  const disableGenerate = isGenerating || references.length === 0;
+  const disableGenerate =
+    isGenerating ||
+    references.length === 0 ||
+    (!!usage && usage.remaining <= 0) ||
+    !!usageError;
+  const displayUsageLimit = usage?.dailyLimit ?? DEFAULT_DAILY_LIMIT;
+  const displayUsageRemaining = usage?.remaining ?? DEFAULT_DAILY_LIMIT;
 
   const triggerUpload = () => fileInputRef.current?.click();
 
@@ -87,6 +113,20 @@ const DashboardPage: React.FC = () => {
 
   const removeReference = (id: string) => {
     setReferences((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const refreshUsage = async (userId: string) => {
+    setIsUsageLoading(true);
+    try {
+      const stats = await getDailyUsage(userId);
+      setUsage(stats);
+      setUsageError(null);
+    } catch (error) {
+      console.error("Usage fetch error:", error);
+      setUsageError("Unable to load daily limit.");
+    } finally {
+      setIsUsageLoading(false);
+    }
   };
 
   const handleGenerateStoryboard = async () => {
@@ -123,6 +163,12 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
+    const userId = session?.user?.id;
+    if (!userId) {
+      alert("Unable to verify your account. Please sign in again.");
+      return;
+    }
+
     const setter =
       mode === "slideshow" ? setSlideshowResults : setManualResults;
     const currentList = mode === "slideshow" ? slideshowResults : manualResults;
@@ -136,12 +182,51 @@ const DashboardPage: React.FC = () => {
       )
     );
 
+    let latestUsage: DailyUsage | null = usage;
+    try {
+      latestUsage = await getDailyUsage(userId);
+      setUsage(latestUsage);
+      setUsageError(null);
+    } catch (error) {
+      console.error("Usage check error:", error);
+      setter((prev) =>
+        prev.map((res, idx) =>
+          idx === index
+            ? {
+                ...res,
+                isLoading: false,
+                error: "Unable to check usage limit.",
+              }
+            : res
+        )
+      );
+      return;
+    }
+
+    if (latestUsage && latestUsage.remaining <= 0) {
+      setter((prev) =>
+        prev.map((res, idx) =>
+          idx === index
+            ? {
+                ...res,
+                isLoading: false,
+                error: "Daily limit reached.",
+              }
+            : res
+        )
+      );
+      alert("Daily limit reached. Please try again tomorrow.");
+      return;
+    }
+
     try {
       const imageUrl = await generateCharacterScene(
         targetResult.prompt,
         references,
         size
       );
+      const updatedUsage = await recordGeneration(userId);
+      setUsage(updatedUsage);
       setter((prev) =>
         prev.map((res, idx) =>
           idx === index ? { ...res, imageUrl, isLoading: false } : res
@@ -149,6 +234,10 @@ const DashboardPage: React.FC = () => {
       );
     } catch (error: any) {
       console.error("Regeneration error:", error);
+      if (error?.message === "DAILY_LIMIT_REACHED") {
+        await refreshUsage(userId);
+        alert("Daily limit reached. Please try again tomorrow.");
+      }
       setter((prev) =>
         prev.map((res, idx) =>
           idx === index
@@ -171,18 +260,66 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    setIsGenerating(true);
+    const userId = session?.user?.id;
+    if (!userId) {
+      alert("Unable to verify your account. Please sign in again.");
+      return;
+    }
+
+    let promptList: string[] = [];
+    let scenesToGenerate = 0;
 
     if (mode === "manual") {
-      const promptList = manualPrompts
-        .split("\n")
-        .filter((p) => p.trim() !== "");
+      promptList = manualPrompts.split("\n").filter((p) => p.trim() !== "");
       if (promptList.length === 0) {
         alert("Please enter some manual prompts.");
-        setIsGenerating(false);
         return;
       }
 
+      scenesToGenerate = promptList.length;
+    } else {
+      if (slideshowResults.length === 0) {
+        alert("Please create a storyboard first.");
+        return;
+      }
+
+      scenesToGenerate = slideshowResults.filter(
+        (res) => !res.isCTA && !res.imageUrl
+      ).length;
+
+      if (scenesToGenerate === 0) {
+        alert("All scenes are already generated.");
+        return;
+      }
+    }
+
+    setIsGenerating(true);
+
+    let latestUsage: DailyUsage | null = usage;
+
+    try {
+      latestUsage = await getDailyUsage(userId);
+      setUsage(latestUsage);
+      setUsageError(null);
+    } catch (error) {
+      console.error("Usage check error:", error);
+      setUsageError("Unable to load daily limit.");
+      alert("Unable to check your daily limit. Please try again.");
+      setIsGenerating(false);
+      return;
+    }
+
+    if (latestUsage && scenesToGenerate > latestUsage.remaining) {
+      alert(
+        `You can generate ${latestUsage.remaining} more image${
+          latestUsage.remaining === 1 ? "" : "s"
+        } today (limit ${latestUsage.dailyLimit}).`
+      );
+      setIsGenerating(false);
+      return;
+    }
+
+    if (mode === "manual") {
       const initialManualResults = promptList.map(
         (p) => ({ prompt: p, isLoading: true } as SceneResult)
       );
@@ -195,6 +332,8 @@ const DashboardPage: React.FC = () => {
             references,
             size
           );
+          const updatedUsage = await recordGeneration(userId);
+          setUsage(updatedUsage);
           setManualResults((prev) =>
             prev.map((res, idx) =>
               idx === i ? { ...res, imageUrl, isLoading: false } : res
@@ -202,6 +341,11 @@ const DashboardPage: React.FC = () => {
           );
         } catch (error: any) {
           console.error("Manual generation error:", error);
+          if (error?.message === "DAILY_LIMIT_REACHED") {
+            await refreshUsage(userId);
+            alert("Daily limit reached. Please try again tomorrow.");
+            break;
+          }
           setManualResults((prev) =>
             prev.map((res, idx) =>
               idx === i
@@ -212,12 +356,6 @@ const DashboardPage: React.FC = () => {
         }
       }
     } else {
-      if (slideshowResults.length === 0) {
-        alert("Please create a storyboard first.");
-        setIsGenerating(false);
-        return;
-      }
-
       setSlideshowResults((prev) =>
         prev.map((res) => ({ ...res, isLoading: !res.isCTA && !res.imageUrl }))
       );
@@ -232,6 +370,8 @@ const DashboardPage: React.FC = () => {
             references,
             size
           );
+          const updatedUsage = await recordGeneration(userId);
+          setUsage(updatedUsage);
           setSlideshowResults((prev) =>
             prev.map((res, idx) =>
               idx === i ? { ...res, imageUrl, isLoading: false } : res
@@ -239,6 +379,11 @@ const DashboardPage: React.FC = () => {
           );
         } catch (error: any) {
           console.error("Slideshow generation error:", error);
+          if (error?.message === "DAILY_LIMIT_REACHED") {
+            await refreshUsage(userId);
+            alert("Daily limit reached. Please try again tomorrow.");
+            break;
+          }
           setSlideshowResults((prev) =>
             prev.map((res, idx) =>
               idx === i
@@ -272,6 +417,9 @@ const DashboardPage: React.FC = () => {
         isGenerating={isGenerating}
         onGenerate={startGeneration}
         disableGenerate={disableGenerate}
+        usageRemaining={displayUsageRemaining}
+        usageLimit={displayUsageLimit}
+        isUsageLoading={isUsageLoading}
       />
 
       <main className="app__body">
@@ -284,6 +432,9 @@ const DashboardPage: React.FC = () => {
           disableGenerate={disableGenerate}
           onUploadClick={triggerUpload}
           onGenerate={startGeneration}
+          usageRemaining={displayUsageRemaining}
+          usageLimit={displayUsageLimit}
+          isUsageLoading={isUsageLoading}
         />
 
         <div className="app__content">
