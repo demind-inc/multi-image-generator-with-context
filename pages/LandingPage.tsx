@@ -75,9 +75,11 @@ const LandingPage: React.FC = () => {
             />
           </div>
           <div className="brand__text">
-            <p className="brand__eyebrow">Context aware</p>
             <p className="brand__title">NanoGen AI</p>
-            <p className="brand__subtitle">Multi-image generator</p>
+            <p className="brand__subtitle">
+              <p className="brand__eyebrow">Context aware</p>Multi-image
+              generator
+            </p>
           </div>
         </div>
 
