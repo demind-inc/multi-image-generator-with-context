@@ -10,7 +10,7 @@ import {
 export async function generateSlideshowStructure(
   topic: string
 ): Promise<SlideContent[]> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("KEY_NOT_FOUND");
   }
@@ -54,7 +54,7 @@ export async function generateCharacterScene(
   references: ReferenceImage[],
   size: ImageSize
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("KEY_NOT_FOUND");
   }

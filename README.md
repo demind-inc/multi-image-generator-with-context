@@ -31,8 +31,8 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 3. Add your Supabase project keys for authentication and the `profiles` table:
 
    ```bash
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
    Ensure you have a `profiles` table with `id uuid primary key`, `email text`, `full_name text`, and `last_sign_in_at timestamptz`.
