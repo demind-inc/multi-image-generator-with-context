@@ -33,7 +33,7 @@ const DashboardPage: React.FC = () => {
   // Redirect to auth page if not authenticated
   useEffect(() => {
     if (authStatus === "signed_out") {
-      navigate("/", { replace: true });
+      navigate("/auth", { replace: true });
     }
   }, [authStatus, navigate]);
 
