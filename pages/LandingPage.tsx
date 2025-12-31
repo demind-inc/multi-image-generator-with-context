@@ -352,6 +352,42 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+
+        <section id="faq" className="landing__section">
+          <div className="landing__section-head">
+            <p className="landing__eyebrow">FAQ</p>
+            <h2>Answers before you start</h2>
+            <p className="landing__section-copy">
+              Quick hits on the most common questions about generating contextual images with NanoGen.
+            </p>
+          </div>
+          <div className="faq">
+            <div className="faq__item">
+              <div className="faq__question">How does it differ from ChatGPT?</div>
+              <div className="faq__answer">
+                We generate multiple images from your reference and prompts, keeping your look consistent across every shot—ChatGPT is text-first.
+              </div>
+            </div>
+            <div className="faq__item">
+              <div className="faq__question">Do I need to sign in to generate?</div>
+              <div className="faq__answer">
+                Yes. Sign in/up to unlock your first free render; additional images are billed per render.
+              </div>
+            </div>
+            <div className="faq__item">
+              <div className="faq__question">How many reference images should I upload?</div>
+              <div className="faq__answer">
+                Upload 1–3 clear photos with good lighting. We use them to lock your face, outfit, and style for all generated scenes.
+              </div>
+            </div>
+            <div className="faq__item">
+              <div className="faq__question">Can I edit prompts manually?</div>
+              <div className="faq__answer">
+                Yes. Start with our suggested prompts or type your own to control the setting, mood, and props.
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {showAuthModal && (

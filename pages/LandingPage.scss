@@ -847,6 +847,31 @@
   box-shadow: 0 14px 28px rgba(14, 165, 233, 0.26);
 }
 
+.faq {
+  display: grid;
+  gap: 10px;
+}
+
+.faq__item {
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.faq__question {
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.faq__answer {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 .landing__modal-backdrop {
   position: fixed;
   inset: 0;
