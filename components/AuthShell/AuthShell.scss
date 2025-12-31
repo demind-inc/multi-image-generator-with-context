@@ -15,17 +15,17 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   box-shadow: 0 24px 60px rgba(79, 70, 229, 0.16);
-}
 
-.auth-card__title {
-  margin: 12px 0 6px;
-  font-size: 24px;
-  letter-spacing: -0.01em;
-}
+  &__title {
+    margin: 12px 0 6px;
+    font-size: 24px;
+    letter-spacing: -0.01em;
+  }
 
-.auth-card__subtitle {
-  margin: 0 0 12px;
-  color: #475569;
+  &__subtitle {
+    margin: 0 0 12px;
+    color: #475569;
+  }
 }
 
 .auth-form {
@@ -40,16 +40,16 @@
   padding: 12px;
   border-radius: 12px;
   font-weight: 600;
-}
 
-.auth-alert--success {
-  background: #ecfdf3;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
+  &--success {
+    background: #ecfdf3;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
 
-.auth-alert--error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecdd3;
+  &--error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecdd3;
+  }
 }
