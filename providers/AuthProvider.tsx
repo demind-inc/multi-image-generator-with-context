@@ -90,9 +90,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 );
               }
             } else {
-              // Only set to signed_out after initialization is complete
-              // This prevents race conditions during initial load
-              if (initializationComplete || event === "SIGNED_OUT") {
+              // Set to signed_out if no session
+              // For INITIAL_SESSION with no user, we should set signed_out immediately
+              if (
+                initializationComplete ||
+                event === "SIGNED_OUT" ||
+                event === "INITIAL_SESSION"
+              ) {
                 setSession(null);
                 setProfile(null);
                 setAuthStatus("signed_out");
@@ -152,7 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: authEmail.trim(),
         password: authPassword,
       });
@@ -161,8 +165,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error;
       }
 
-      // Success - the onAuthStateChange listener will handle the rest
-      setAuthMessage(null);
+      // Update auth state immediately after successful sign in
+      if (data.session?.user) {
+        setSession(data.session);
+        setProfile(data.session.user);
+        setAuthStatus("signed_in");
+        setAuthMessage(null);
+        setAuthError(null);
+      }
     } catch (error: any) {
       console.error("Sign-in error:", error);
       setAuthError(
@@ -196,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: authEmail.trim(),
         password: authPassword,
       });
@@ -205,8 +215,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error;
       }
 
-      // Success - the onAuthStateChange listener will handle the rest
-      setAuthMessage("Account created successfully! You are now signed in.");
+      // Update auth state immediately after successful sign up
+      if (data.session?.user) {
+        setSession(data.session);
+        setProfile(data.session.user);
+        setAuthStatus("signed_in");
+        setAuthMessage("Account created successfully! You are now signed in.");
+        setAuthError(null);
+      } else if (data.user) {
+        // If session is null but user exists (email confirmation required)
+        // Still set the user but keep status as signed_out until confirmed
+        setProfile(data.user);
+        setAuthMessage("Account created! Please check your email to confirm.");
+      }
     } catch (error: any) {
       console.error("Sign-up error:", error);
       setAuthError(
