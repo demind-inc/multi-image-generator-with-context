@@ -61,6 +61,19 @@
   }
 }
 
+.reference-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
 .reference-thumb {
   position: relative;
   overflow: hidden;

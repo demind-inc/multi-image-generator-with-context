@@ -78,6 +78,27 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
    The app will check this table to determine if a user has an active subscription. When a user completes payment, their subscription status is automatically updated in this table.
 
+   Add tables to store saved reference images and prompt presets:
+
+   ```sql
+   create table public.reference_library (
+     id uuid primary key default uuid_generate_v4(),
+     user_id uuid references auth.users not null,
+     label text,
+     data text not null,
+     mime_type text not null,
+     created_at timestamptz not null default now()
+   );
+
+   create table public.prompt_library (
+     id uuid primary key default uuid_generate_v4(),
+     user_id uuid references auth.users not null,
+     title text not null,
+     prompt_text text not null,
+     created_at timestamptz not null default now()
+   );
+   ```
+
 4. Connect Stripe subscription checkout ($20/month) for paid generations after the first image:
 
    ```bash

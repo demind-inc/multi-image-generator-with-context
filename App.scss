@@ -243,6 +243,17 @@ body {
     color: #2563eb;
     text-transform: uppercase;
     cursor: pointer;
+
+    &--ghost {
+      color: #0f172a;
+      opacity: 0.7;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 }
 
@@ -317,6 +328,38 @@ body {
 
 .hidden-input {
   display: none;
+}
+
+.chip-button {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease,
+    opacity 0.2s ease;
+
+  &:hover {
+    border-color: #6366f1;
+    box-shadow: 0 10px 22px rgba(99, 102, 241, 0.12);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  &--ghost {
+    background: #ffffff;
+    color: #334155;
+  }
 }
 
 .custom-scrollbar {

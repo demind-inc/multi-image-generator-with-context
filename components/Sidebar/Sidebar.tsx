@@ -9,12 +9,18 @@ interface SidebarProps {
   onUploadClick: () => void;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveReference: (id: string) => void;
+  onSaveReferences: () => void;
+  isSavingReferences: boolean;
+  onOpenReferenceLibrary: () => void;
   topic: string;
   onTopicChange: (value: string) => void;
   onGenerateStoryboard: () => void;
   isCreatingStoryboard: boolean;
   manualPrompts: string;
   onManualPromptsChange: (value: string) => void;
+  onSavePrompt: () => void;
+  isSavingPrompt: boolean;
+  onOpenPromptLibrary: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -24,21 +30,35 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUploadClick,
   onFileChange,
   onRemoveReference,
+  onSaveReferences,
+  isSavingReferences,
+  onOpenReferenceLibrary,
   topic,
   onTopicChange,
   onGenerateStoryboard,
   isCreatingStoryboard,
   manualPrompts,
   onManualPromptsChange,
+  onSavePrompt,
+  isSavingPrompt,
+  onOpenPromptLibrary,
 }) => {
   return (
     <div className="sidebar custom-scrollbar">
       <section className="card">
         <div className="card__header">
           <h3 className="card__title">References</h3>
-          <button onClick={onUploadClick} className="card__action">
-            Upload
-          </button>
+          <div className="card__actions">
+            <button
+              onClick={onOpenReferenceLibrary}
+              className="card__action card__action--ghost"
+            >
+              Dataset
+            </button>
+            <button onClick={onUploadClick} className="card__action">
+              Upload
+            </button>
+          </div>
         </div>
         <input
           type="file"
@@ -48,6 +68,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           accept="image/*"
           onChange={onFileChange}
         />
+        <div className="reference-actions">
+          <button
+            onClick={onSaveReferences}
+            disabled={isSavingReferences || references.length === 0}
+            className="chip-button"
+            title="Save current references for reuse"
+          >
+            {isSavingReferences ? "Saving..." : "Save to dataset"}
+          </button>
+        </div>
         {references.length === 0 ? (
           <div onClick={onUploadClick} className="references__placeholder">
             <svg
@@ -130,6 +160,21 @@ const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <>
             <h3 className="card__title">Manual Scenarios</h3>
+            <div className="prompt-actions">
+              <button
+                onClick={onOpenPromptLibrary}
+                className="chip-button chip-button--ghost"
+              >
+                Use saved prompt
+              </button>
+              <button
+                onClick={onSavePrompt}
+                disabled={isSavingPrompt || !manualPrompts.trim()}
+                className="chip-button"
+              >
+                {isSavingPrompt ? "Saving..." : "Save prompt"}
+              </button>
+            </div>
             <textarea
               value={manualPrompts}
               onChange={(e) => onManualPromptsChange(e.target.value)}

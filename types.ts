@@ -24,6 +24,21 @@ export interface ReferenceImage {
   mimeType: string;
 }
 
+export interface ReferenceLibraryItem {
+  id: string;
+  label: string | null;
+  data: string;
+  mimeType: string;
+  createdAt?: string | null;
+}
+
+export interface PromptPreset {
+  id: string;
+  title: string;
+  content: string;
+  createdAt?: string | null;
+}
+
 export interface AccountProfile {
   id: string;
   email: string | null;

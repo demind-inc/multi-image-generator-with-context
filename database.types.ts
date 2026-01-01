@@ -89,6 +89,55 @@ export interface Database {
           updated_at?: string | null; // timestamptz
         };
       };
+      reference_library: {
+        Row: {
+          id: string; // uuid, primary key
+          user_id: string; // uuid, references auth.users
+          label: string | null; // text, optional name
+          data: string; // text, base64 image
+          mime_type: string; // text, image mime type
+          created_at: string; // timestamptz, default now()
+        };
+        Insert: {
+          id?: string; // uuid
+          user_id: string; // uuid
+          label?: string | null; // text
+          data: string; // text
+          mime_type: string; // text
+          created_at?: string; // timestamptz
+        };
+        Update: {
+          id?: string; // uuid
+          user_id?: string; // uuid
+          label?: string | null; // text
+          data?: string; // text
+          mime_type?: string; // text
+          created_at?: string | null; // timestamptz
+        };
+      };
+      prompt_library: {
+        Row: {
+          id: string; // uuid, primary key
+          user_id: string; // uuid, references auth.users
+          title: string; // text
+          prompt_text: string; // text
+          created_at: string; // timestamptz, default now()
+        };
+        Insert: {
+          id?: string; // uuid
+          user_id: string; // uuid
+          title: string; // text
+          prompt_text: string; // text
+          created_at?: string; // timestamptz
+        };
+        Update: {
+          id?: string; // uuid
+          user_id?: string; // uuid
+          title?: string; // text
+          prompt_text?: string; // text
+          created_at?: string | null; // timestamptz
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -120,3 +169,17 @@ export type SubscriptionsInsert =
   Database["public"]["Tables"]["subscriptions"]["Insert"];
 export type SubscriptionsUpdate =
   Database["public"]["Tables"]["subscriptions"]["Update"];
+
+export type ReferenceLibraryRow =
+  Database["public"]["Tables"]["reference_library"]["Row"];
+export type ReferenceLibraryInsert =
+  Database["public"]["Tables"]["reference_library"]["Insert"];
+export type ReferenceLibraryUpdate =
+  Database["public"]["Tables"]["reference_library"]["Update"];
+
+export type PromptLibraryRow =
+  Database["public"]["Tables"]["prompt_library"]["Row"];
+export type PromptLibraryInsert =
+  Database["public"]["Tables"]["prompt_library"]["Insert"];
+export type PromptLibraryUpdate =
+  Database["public"]["Tables"]["prompt_library"]["Update"];
