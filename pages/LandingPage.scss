@@ -635,6 +635,32 @@
     box-shadow: 0 14px 30px rgba(249, 115, 22, 0.26);
   }
 
+  .faq {
+    display: grid;
+    gap: 10px;
+
+    &__item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.26);
+    }
+
+    &__question {
+      font-weight: 800;
+      margin: 0 0 6px;
+      color: #e2e8f0;
+    }
+
+    &__answer {
+      margin: 0;
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 14px;
+    }
+  }
+
   @media (max-width: 1080px) {
     &__header {
       grid-template-columns: 1fr;

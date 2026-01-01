@@ -131,7 +131,17 @@ body {
   &__subtitle {
     margin: 0;
     font-size: 12px;
-    color: #475569;
+    color: #eeeeee;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__subtitle-text {
+    font-size: 12px;
+    color: #eeeeee;
     font-weight: 600;
   }
 }

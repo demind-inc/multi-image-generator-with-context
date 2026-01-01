@@ -112,7 +112,9 @@ const LandingPage: React.FC = () => {
             <p className="brand__title">NanoGen AI</p>
             <div className="brand__subtitle">
               <span className="brand__eyebrow">Context aware</span>
-              <span>Multi-image generator</span>
+              <span className="brand__subtitle-text">
+                Multi-image generator
+              </span>
             </div>
           </div>
         </div>
@@ -267,58 +269,40 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        <section id="try" className="landing__section landing__section--cta">
+        <section id="faq" className="landing__section landing__section--faq">
           <div className="landing__section-head">
-            <p className="landing__eyebrow">Try it</p>
-            <h2>Upload and generate</h2>
+            <p className="landing__eyebrow">FAQ</p>
+            <h2>Quick answers</h2>
           </div>
-          <div className="landing__cta-panel">
-            <div
-              className="landing__drop"
-              role="button"
-              tabIndex={0}
-              onClick={handleUploadClick}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleUploadClick();
-                }
-              }}
-            >
-              <div className="landing__drop-head">
-                <div className="landing__drop-icon">+</div>
-                <div className="landing__drop-text">
-                  <strong>Drop your reference</strong>
-                  <span>We’ll keep your look across the set.</span>
-                </div>
+          <div className="faq">
+            <div className="faq__item">
+              <div className="faq__question">
+                Do I need to sign in to generate?
               </div>
-              {uploadedFileName && (
-                <div className="landing__upload-file">
-                  <span className="landing__upload-file-name">
-                    {uploadedFileName}
-                  </span>
-                  <span className="landing__upload-file-tag">Ready</span>
-                </div>
-              )}
-              <button className="landing__upload" onClick={handleUploadClick}>
-                Choose file
-              </button>
+              <div className="faq__answer">
+                Yes—sign in or create an account to unlock your first free
+                image.
+              </div>
             </div>
-
-            <div className="landing__prompt-card">
-              <p className="landing__label">Prompt preview</p>
-              <div className="landing__prompt">
-                Listening closely in a busy café with warm light and soft blur
-                behind me.
+            <div className="faq__item">
+              <div className="faq__question">
+                How many photos should I upload?
               </div>
-              <div className="landing__prompt-tags">
-                <span className="pill pill--ghost">Match face</span>
-                <span className="pill pill--ghost">Keep outfit</span>
-                <span className="pill pill--ghost">Warm tones</span>
+              <div className="faq__answer">
+                Upload 1–3 clear shots with good lighting to lock your look.
               </div>
-              <button className="primary-button" onClick={handleStart}>
-                Sign in to generate
-              </button>
+            </div>
+            <div className="faq__item">
+              <div className="faq__question">Are the outputs watermarked?</div>
+              <div className="faq__answer">
+                No—download your generated images without watermarks.
+              </div>
+            </div>
+            <div className="faq__item">
+              <div className="faq__question">Can I edit the prompt?</div>
+              <div className="faq__answer">
+                Yes—start from the suggested prompt or type your own context.
+              </div>
             </div>
           </div>
         </section>
