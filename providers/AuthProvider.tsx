@@ -170,6 +170,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setAuthMessage(null);
         setAuthError(null);
       }
+      window.location.href = "/dashboard";
     } catch (error: any) {
       console.error("Sign-in error:", error);
       setAuthError(
@@ -231,6 +232,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.error("Failed to create profile:", profileError);
           // Don't fail the sign up if profile creation fails
         }
+
+        // Redirect to dashboard after successful sign up
+        window.location.href = "/dashboard";
       } else if (data.user) {
         // If session is null but user exists (email confirmation required)
         // Still set the user but keep status as signed_out until confirmed
