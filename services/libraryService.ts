@@ -1,8 +1,5 @@
 import { getSupabaseClient } from "./supabaseClient";
-import {
-  PromptLibraryInsert,
-  ReferenceLibraryInsert,
-} from "../database.types";
+import { PromptLibraryInsert, ReferenceLibraryInsert } from "../database.types";
 import { PromptPreset, ReferenceImage, ReferenceLibraryItem } from "../types";
 
 const DEFAULT_REFERENCE_LABEL = "Saved reference";
@@ -46,13 +43,22 @@ export async function fetchReferenceLibrary(
   }
 
   return (
-    data?.map((item) => ({
-      id: item.id,
-      label: item.label,
-      data: item.data,
-      mimeType: item.mime_type,
-      createdAt: item.created_at,
-    })) ?? []
+    data?.map((item) => {
+      // Ensure data has the proper data URL prefix
+      let imageData = item.data;
+      if (!imageData.startsWith("data:")) {
+        // If data doesn't have prefix, add it
+        imageData = `data:${item.mime_type};base64,${imageData}`;
+      }
+
+      return {
+        id: item.id,
+        label: item.label,
+        data: imageData,
+        mimeType: item.mime_type,
+        createdAt: item.created_at,
+      };
+    }) ?? []
   );
 }
 
