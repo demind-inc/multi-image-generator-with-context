@@ -17,8 +17,13 @@ import {
   getDailyUsage,
   recordGeneration,
 } from "../services/usageService";
+import {
+  getSubscription,
+  activateSubscription,
+} from "../services/subscriptionService";
 import AppHeader from "../components/AppHeader/AppHeader";
 import Hero from "../components/Hero/Hero";
+import PaymentModal from "../components/PaymentModal/PaymentModal";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Results from "../components/Results/Results";
 import Footer from "../components/Footer/Footer";
@@ -41,7 +46,17 @@ const DashboardPage: React.FC = () => {
   const [usage, setUsage] = useState<DailyUsage | null>(null);
   const [isUsageLoading, setIsUsageLoading] = useState(false);
   const [usageError, setUsageError] = useState<string | null>(null);
+  const [hasGeneratedFreeImage, setHasGeneratedFreeImage] = useState<boolean>(
+    () => {
+      if (typeof window === "undefined") return false;
+      return localStorage.getItem("nanogen_has_generated") === "true";
+    }
+  );
+  const [isPaymentUnlocked, setIsPaymentUnlocked] = useState<boolean>(false);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stripeSubscriptionLink = process.env.STRIPE_SUBSCRIPTION_LINK;
 
   // Redirect to auth page if not authenticated
   useEffect(() => {
@@ -54,8 +69,55 @@ const DashboardPage: React.FC = () => {
     const userId = session?.user?.id;
     if (authStatus === "signed_in" && userId) {
       refreshUsage(userId);
+      refreshSubscription(userId);
     }
   }, [authStatus, session?.user?.id]);
+
+  const refreshSubscription = async (userId: string) => {
+    setIsSubscriptionLoading(true);
+    try {
+      const subscription = await getSubscription(userId);
+      setIsPaymentUnlocked(subscription?.isActive ?? false);
+    } catch (error) {
+      console.error("Failed to fetch subscription:", error);
+      setIsPaymentUnlocked(false);
+    } finally {
+      setIsSubscriptionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      isPaymentUnlocked ||
+      !session?.user?.id
+    )
+      return;
+    const params = new URLSearchParams(window.location.search);
+    const paidFlag =
+      params.get("paid") === "1" ||
+      params.get("paid") === "true" ||
+      params.get("session_id");
+
+    if (paidFlag) {
+      const activateSubscriptionStatus = async () => {
+        try {
+          await activateSubscription(session.user.id);
+          setIsPaymentUnlocked(true);
+          params.delete("paid");
+          params.delete("session_id");
+          const newSearch = params.toString();
+          const newUrl = `${window.location.pathname}${
+            newSearch ? `?${newSearch}` : ""
+          }`;
+          window.history.replaceState(null, "", newUrl);
+        } catch (error) {
+          console.error("Failed to activate subscription:", error);
+        }
+      };
+      activateSubscriptionStatus();
+    }
+  }, [isPaymentUnlocked, session?.user?.id]);
 
   // Show loading state while checking auth
   if (authStatus === "checking") {
@@ -115,6 +177,36 @@ const DashboardPage: React.FC = () => {
     setReferences((prev) => prev.filter((r) => r.id !== id));
   };
 
+  const openPaymentModal = () => {
+    setIsPaymentModalOpen(true);
+  };
+
+  const markFirstGenerationComplete = () => {
+    if (!hasGeneratedFreeImage) {
+      setHasGeneratedFreeImage(true);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("nanogen_has_generated", "true");
+      }
+    }
+  };
+
+  const unlockPayments = async () => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      alert("Unable to verify your account. Please sign in again.");
+      return;
+    }
+
+    try {
+      await activateSubscription(userId);
+      setIsPaymentUnlocked(true);
+      setIsPaymentModalOpen(false);
+    } catch (error) {
+      console.error("Failed to activate subscription:", error);
+      alert("Failed to activate subscription. Please try again.");
+    }
+  };
+
   const refreshUsage = async (userId: string) => {
     setIsUsageLoading(true);
     try {
@@ -156,6 +248,11 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleRegenerate = async (index: number) => {
+    if (hasGeneratedFreeImage && !isPaymentUnlocked) {
+      openPaymentModal();
+      return;
+    }
+
     if (references.length === 0) {
       alert(
         "Please upload at least one reference image for character consistency."
@@ -227,6 +324,7 @@ const DashboardPage: React.FC = () => {
       );
       const updatedUsage = await recordGeneration(userId);
       setUsage(updatedUsage);
+      markFirstGenerationComplete();
       setter((prev) =>
         prev.map((res, idx) =>
           idx === index ? { ...res, imageUrl, isLoading: false } : res
@@ -253,6 +351,11 @@ const DashboardPage: React.FC = () => {
   };
 
   const startGeneration = async () => {
+    if (hasGeneratedFreeImage && !isPaymentUnlocked) {
+      openPaymentModal();
+      return;
+    }
+
     if (references.length === 0) {
       alert(
         "Please upload at least one reference image for character consistency."
@@ -334,6 +437,7 @@ const DashboardPage: React.FC = () => {
           );
           const updatedUsage = await recordGeneration(userId);
           setUsage(updatedUsage);
+          markFirstGenerationComplete();
           setManualResults((prev) =>
             prev.map((res, idx) =>
               idx === i ? { ...res, imageUrl, isLoading: false } : res
@@ -372,6 +476,7 @@ const DashboardPage: React.FC = () => {
           );
           const updatedUsage = await recordGeneration(userId);
           setUsage(updatedUsage);
+          markFirstGenerationComplete();
           setSlideshowResults((prev) =>
             prev.map((res, idx) =>
               idx === i ? { ...res, imageUrl, isLoading: false } : res
@@ -461,6 +566,13 @@ const DashboardPage: React.FC = () => {
           />
         </div>
       </main>
+
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        onUnlock={unlockPayments}
+        paymentUrl={stripeSubscriptionLink}
+      />
 
       <Footer />
     </div>

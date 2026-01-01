@@ -51,7 +51,31 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
    The app will read the `daily_limit` from this table and defaults to 10 generations per day when inserting the current day's row.
 
-4. Run the app:
+   Add a `subscriptions` table to track user subscription status:
+
+   ```sql
+   create table public.subscriptions (
+     user_id uuid references auth.users not null primary key,
+     is_active boolean not null default false,
+     stripe_subscription_id text,
+     stripe_customer_id text,
+     current_period_end timestamptz,
+     created_at timestamptz not null default now(),
+     updated_at timestamptz not null default now()
+   );
+   ```
+
+   The app will check this table to determine if a user has an active subscription. When a user completes payment, their subscription status is automatically updated in this table.
+
+4. Connect Stripe subscription checkout ($20/month) for paid generations after the first image:
+
+   ```bash
+   STRIPE_SUBSCRIPTION_LINK=https://buy.stripe.com/your_subscription_link_here
+   ```
+
+   Create a Stripe Subscription Payment Link for $20/month and use its URL here. The app will show a paywall modal after the first successful image and direct users to this link. If you include `?paid=true` or `?session_id=...` in your return URL, the dashboard will automatically activate the subscription in the database.
+
+5. Run the app:
    ```bash
    npm run dev
    # or

@@ -1,0 +1,113 @@
+.payment-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  padding: 16px;
+  backdrop-filter: blur(6px);
+}
+
+.payment-modal {
+  position: relative;
+  width: min(520px, 100%);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.payment-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: #475569;
+  cursor: pointer;
+}
+
+.payment-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.28);
+}
+
+.payment-modal__lead {
+  margin-top: 8px;
+  margin-bottom: 16px;
+  color: #334155;
+}
+
+.payment-modal__feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.payment-modal__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+
+  span {
+    font-size: 18px;
+  }
+
+  p {
+    margin: 4px 0 0 0;
+    color: #475569;
+    font-size: 13px;
+  }
+}
+
+.payment-modal__cta {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+  display: inline-flex;
+}
+
+.payment-modal__ghost {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.payment-modal__error {
+  padding: 12px;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecdd3;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
