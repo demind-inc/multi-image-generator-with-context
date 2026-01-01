@@ -269,6 +269,43 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
+        <section id="pricing" className="landing__section landing__section--pricing">
+          <div className="landing__section-head">
+            <p className="landing__eyebrow">Pricing</p>
+            <h2>Start free, unlock unlimited sets</h2>
+          </div>
+          <div className="pricing-grid">
+            <div className="pricing-card">
+              <div className="pricing-card__badge">Starter</div>
+              <h3>First image</h3>
+              <p className="pricing-card__price">$0</p>
+              <p className="pricing-card__note">Sign in and generate one image on us.</p>
+              <ul className="pricing-card__list">
+                <li>1 free render</li>
+                <li>No watermark</li>
+                <li>Keep your look for later</li>
+              </ul>
+              <button className="primary-button" onClick={handleStart}>
+                Claim free image
+              </button>
+            </div>
+            <div className="pricing-card pricing-card--highlight">
+              <div className="pricing-card__badge">Creator</div>
+              <h3>After the first</h3>
+              <p className="pricing-card__price">$20/mo</p>
+              <p className="pricing-card__note">Unlimited generation after your free try.</p>
+              <ul className="pricing-card__list">
+                <li>Unlimited outputs</li>
+                <li>Fast rendering queue</li>
+                <li>Consistent faces across prompts</li>
+              </ul>
+              <button className="primary-button" onClick={handleStart}>
+                Start generating
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section id="faq" className="landing__section landing__section--faq">
           <div className="landing__section-head">
             <p className="landing__eyebrow">FAQ</p>
