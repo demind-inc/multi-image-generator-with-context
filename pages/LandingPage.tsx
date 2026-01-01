@@ -123,6 +123,8 @@ const LandingPage: React.FC = () => {
           <button onClick={() => scrollToSection("gallery")}>Examples</button>
           <button onClick={() => scrollToSection("flow")}>Flow</button>
           <button onClick={() => scrollToSection("try")}>Try it</button>
+          <button onClick={() => scrollToSection("pricing")}>Pricing</button>
+          <button onClick={() => scrollToSection("faq")}>FAQ</button>
         </nav>
 
         <div className="landing__actions">
@@ -269,7 +271,10 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        <section id="pricing" className="landing__section landing__section--pricing">
+        <section
+          id="pricing"
+          className="landing__section landing__section--pricing"
+        >
           <div className="landing__section-head">
             <p className="landing__eyebrow">Pricing</p>
             <h2>Start free, unlock unlimited sets</h2>
@@ -279,7 +284,9 @@ const LandingPage: React.FC = () => {
               <div className="pricing-card__badge">Starter</div>
               <h3>First image</h3>
               <p className="pricing-card__price">$0</p>
-              <p className="pricing-card__note">Sign in and generate one image on us.</p>
+              <p className="pricing-card__note">
+                Sign in and generate one image on us.
+              </p>
               <ul className="pricing-card__list">
                 <li>1 free render</li>
                 <li>No watermark</li>
@@ -293,7 +300,9 @@ const LandingPage: React.FC = () => {
               <div className="pricing-card__badge">Creator</div>
               <h3>After the first</h3>
               <p className="pricing-card__price">$20/mo</p>
-              <p className="pricing-card__note">Unlimited generation after your free try.</p>
+              <p className="pricing-card__note">
+                Unlimited generation after your free try.
+              </p>
               <ul className="pricing-card__list">
                 <li>Unlimited outputs</li>
                 <li>Fast rendering queue</li>
