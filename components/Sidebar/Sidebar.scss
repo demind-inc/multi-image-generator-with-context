@@ -44,6 +44,10 @@
     cursor: pointer;
     background: rgba(255, 255, 255, 0.03);
     transition: border-color 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 
     &:hover {
       border-color: #f97316;
