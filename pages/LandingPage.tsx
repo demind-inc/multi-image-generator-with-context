@@ -4,6 +4,32 @@ import { useAuth } from "../providers/AuthProvider";
 import AuthShell from "../components/AuthShell/AuthShell";
 import "./LandingPage.scss";
 
+const referenceImage = {
+  src: "/assets/showcase/reference.png",
+  alt: "Reference upload",
+};
+
+const generatedImages = [
+  {
+    src: "/assets/showcase/output-1.png",
+    prompt: "Boy with a question mark around him",
+  },
+  {
+    src: "/assets/showcase/output-2.png",
+    prompt: "Boy writing in a notebook",
+  },
+  {
+    src: "/assets/showcase/output-3.png",
+    prompt: "Boy feeling annoyed at a noisy cafe",
+  },
+];
+
+const quickSteps = [
+  { title: "Upload one face", detail: "Use 1–3 clear shots. No setup." },
+  { title: "Pick contexts", detail: "Drop prompts: coffee, stage, notes." },
+  { title: "Get your set", detail: "We keep the style and features aligned." },
+];
+
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -65,6 +91,14 @@ const LandingPage: React.FC = () => {
         <span className="landing__orb landing__orb--three" />
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden-input"
+        onChange={handleFileChange}
+      />
+
       <header className="landing__header">
         <div className="landing__brand brand">
           <div className="brand__icon">
@@ -76,19 +110,19 @@ const LandingPage: React.FC = () => {
           </div>
           <div className="brand__text">
             <p className="brand__title">NanoGen AI</p>
-            <p className="brand__subtitle">
-              <p className="brand__eyebrow">Context aware</p>Multi-image
-              generator
-            </p>
+            <div className="brand__subtitle">
+              <span className="brand__eyebrow">Context aware</span>
+              <span className="brand__subtitle-text">
+                Multi-image generator
+              </span>
+            </div>
           </div>
         </div>
 
         <nav className="landing__nav">
-          <button onClick={() => scrollToSection("how-it-works")}>
-            How it works
-          </button>
-          <button onClick={() => scrollToSection("try")}>Try generate</button>
-          <button onClick={() => scrollToSection("pricing")}>Pricing</button>
+          <button onClick={() => scrollToSection("gallery")}>Examples</button>
+          <button onClick={() => scrollToSection("flow")}>Flow</button>
+          <button onClick={() => scrollToSection("try")}>Try it</button>
         </nav>
 
         <div className="landing__actions">
@@ -111,289 +145,200 @@ const LandingPage: React.FC = () => {
       <main className="landing__main">
         <section className="landing__hero">
           <div className="landing__hero-copy">
-            <h1>
-              Show up in any context with consistent, professional AI shots.
-            </h1>
+            <div className="landing__badge">Input ➝ four matching outputs</div>
+            <h1>Drop one photo. Leave with a whole set.</h1>
             <p className="landing__lead">
-              Upload a couple of reference photos, describe the scenario, and
-              let NanoGen produce LinkedIn-ready images that match your face,
-              outfit, and energy.
+              Real results from one upload—warm, consistent, and ready for any
+              scene you describe.
             </p>
             <div className="landing__cta">
               <button className="primary-button" onClick={handleStart}>
-                Try it free
+                Start with your photo
               </button>
               <button
                 className="landing__ghost-button"
-                onClick={() => scrollToSection("how-it-works")}
+                onClick={() => scrollToSection("gallery")}
               >
-                See the flow
+                View examples
               </button>
+            </div>
+            <div className="landing__meta">
+              <span className="pill">1 free image after login</span>
+              <span className="pill pill--ghost">Context-aware prompts</span>
+              <span className="pill pill--ghost">No watermarks</span>
             </div>
           </div>
 
           <div className="landing__hero-panel">
-            <div className="panel">
-              <div className="panel__header">
-                <div>
-                  <p className="panel__label">Try generate</p>
-                </div>
-              </div>
-              <div className="panel__body">
-                <div className="panel__row panel__row--stack">
-                  <div className="panel__mini-label">Upload image</div>
-                  <div
-                    className="landing__solid-upload"
-                    role="button"
-                    tabIndex={0}
-                    onClick={handleUploadClick}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleUploadClick();
-                      }
-                    }}
-                  >
-                    <div className="landing__solid-top">
-                      <span className="landing__drop-icon">+</span>
-                      <div className="landing__drop-text">
-                        <strong>Click to upload</strong> a reference
-                        <p className="landing__drop-hint">
-                          We’ll prompt you to sign in/up before generating.
-                        </p>
-                      </div>
+            <div className="landing__form-card">
+              <div className="landing__form-row">
+                <div className="landing__label">Upload</div>
+                <div
+                  className="landing__solid-upload"
+                  role="button"
+                  tabIndex={0}
+                  onClick={handleUploadClick}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleUploadClick();
+                    }
+                  }}
+                >
+                  <div className="landing__solid-top">
+                    <span className="landing__drop-icon">+</span>
+                    <div className="landing__drop-text">
+                      <strong>Click to upload</strong>
+                      <span className="landing__hint">
+                        1–3 clear shots, PNG or JPG.
+                      </span>
                     </div>
-                    {uploadedFileName && (
-                      <div className="landing__upload-file">
-                        <span className="landing__upload-file-name">
-                          {uploadedFileName}
-                        </span>
-                        <span className="landing__upload-file-tag">
-                          Ready after sign in
-                        </span>
-                      </div>
-                    )}
                   </div>
+                  {uploadedFileName && (
+                    <div className="landing__upload-file">
+                      <span className="landing__upload-file-name">
+                        {uploadedFileName}
+                      </span>
+                      <span className="landing__upload-file-tag">Ready</span>
+                    </div>
+                  )}
                 </div>
-                <div className="panel__row">
-                  <div className="panel__mini-label">Prompt</div>
-                  <div className="panel__prompt panel__prompt--textarea">
-                    Confident LinkedIn banner photo in a bright office with a
-                    laptop. Keep the same face and outfit, add a soft teal
-                    accent in the background.
-                  </div>
-                </div>
+              </div>
 
-                <button className="panel__cta" onClick={handleStart}>
-                  Sign in to generate
-                </button>
+              <div className="landing__form-row">
+                <div className="landing__label">Prompt</div>
+                <div className="landing__prompt landing__prompt--textarea">
+                  Listening closely in a busy café with warm light and soft blur
+                  behind me.
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="landing__section landing__section--consistency">
-          <div className="landing__section-head">
-            <p className="landing__eyebrow">Consistent across prompts</p>
-            <h2>Upload once, generate multiple matching shots</h2>
-            <p className="landing__section-copy">
-              Drop a reference image and a handful of prompts. We keep your face
-              and vibe locked while creating multiple scenes in one go—perfect
-              for LinkedIn profiles, banners, and slide covers.
-            </p>
-          </div>
-          <div className="landing__consistency-grid">
-            <div className="consistency__reference">
-              <div className="consistency__label">Reference</div>
-              <div className="mock-image mock-image--reference">
-                <span>Your upload</span>
-              </div>
-              <p className="consistency__hint">
-                We extract your look once and carry it into every prompt below.
-              </p>
-            </div>
-            <div className="consistency__results">
-              <div className="consistency__header">
-                <p className="consistency__title">Generated set</p>
-                <span className="pill">3 variations</span>
-              </div>
-              <div className="consistency__prompts">
-                <div className="consistency__prompt">
-                  <span className="consistency__dot" />
-                  Casual coffee chat banner
-                </div>
-                <div className="consistency__prompt">
-                  <span className="consistency__dot" />
-                  Confident notebook shot for LinkedIn
-                </div>
-                <div className="consistency__prompt">
-                  <span className="consistency__dot" />
-                  Speaking on stage with warm lights
-                </div>
-              </div>
-              <div className="consistency__samples">
-                <div className="sample-card">
-                  <div className="sample-card__thumb mock-image mock-image--free">
-                    <span>Scene 1</span>
-                  </div>
-                  <p className="sample-card__caption">Matches your upload</p>
-                </div>
-                <div className="sample-card">
-                  <div className="sample-card__thumb mock-image mock-image--paid">
-                    <span>Scene 2</span>
-                  </div>
-                  <p className="sample-card__caption">Same face, new prompt</p>
-                </div>
-                <div className="sample-card">
-                  <div className="sample-card__thumb mock-image mock-image--accent">
-                    <span>Scene 3</span>
-                  </div>
-                  <p className="sample-card__caption">Consistent styling</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="how-it-works" className="landing__section">
-          <div className="landing__section-head">
-            <p className="landing__eyebrow">How it works</p>
-            <h2>From headshot to contextual shots in minutes</h2>
-            <p className="landing__section-copy">
-              Stay consistent across profile photos, banners, and presentation
-              covers. First render is free once you sign in. Every additional
-              image is billed.
-            </p>
-          </div>
-          <div className="landing__steps">
-            <div className="step-card">
-              <span className="step-card__number">01</span>
-              <h3>Sign in or create an account</h3>
-              <p>
-                Access the generator with your account. We unlock one free
-                render so you can see the quality before paying.
-              </p>
-            </div>
-            <div className="step-card">
-              <span className="step-card__number">02</span>
-              <h3>Upload reference images</h3>
-              <p>
-                Add 1-3 clear photos to lock in your look. We keep your face,
-                lighting, and vibe consistent across every scene.
-              </p>
-            </div>
-            <div className="step-card">
-              <span className="step-card__number">03</span>
-              <h3>Describe the context</h3>
-              <p>
-                Tell us the setting: LinkedIn headshot, conference stage, or
-                casual coffee chat. We generate prompts for you or let you edit
-                manually.
-              </p>
-            </div>
-            <div className="step-card">
-              <span className="step-card__number">04</span>
-              <h3>Generate and upgrade</h3>
-              <p>
-                Your first image is free. The second and beyond are billed per
-                image, and you can download everything right from your
-                dashboard.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section id="pricing" className="landing__section">
-          <div className="landing__section-head">
-            <p className="landing__eyebrow">Pricing</p>
-            <h2>Simple, usage-based pricing</h2>
-            <p className="landing__section-copy">
-              The first image is free once you sign in. Every additional render
-              is billed per image so you only pay for what you use.
-            </p>
-          </div>
-          <div className="pricing">
-            <div className="pricing__card">
-              <div className="pricing__tag">Starter</div>
-              <div className="pricing__price">$0</div>
-              <p className="pricing__description">
-                One free image once you sign in. Perfect for testing the
-                quality.
-              </p>
-              <ul className="pricing__list">
-                <li>1 free render</li>
-                <li>Reference image storage</li>
-                <li>Download without watermarks</li>
-              </ul>
-              <button className="pricing__button" onClick={handleStart}>
-                Claim free render
+              <button className="primary-button" onClick={handleStart}>
+                Generate
               </button>
             </div>
-            <div className="pricing__card pricing__card--highlight">
-              <div className="pricing__tag">Creator</div>
-              <div className="pricing__price">Pay per image</div>
-              <p className="pricing__description">
-                Second image and beyond billed per render. Ideal for LinkedIn
-                updates and presentation decks.
+          </div>
+        </section>
+
+        <section
+          id="gallery"
+          className="landing__section landing__section--gallery"
+        >
+          <div className="landing__section-head">
+            <p className="landing__eyebrow">Real outputs</p>
+            <h2>One upload, multiple moods</h2>
+          </div>
+          <div className="landing__mosaic">
+            <div className="mosaic__reference">
+              <div className="landing__card-label">Reference</div>
+              <div className="landing__image-frame">
+                <img
+                  src={referenceImage.src}
+                  alt={referenceImage.alt}
+                  loading="lazy"
+                />
+              </div>
+              <p className="landing__hint">
+                We reuse this face in every scene.
               </p>
-              <ul className="pricing__list">
-                <li>Consistent faces across scenes</li>
-                <li>Context-aware prompts</li>
-                <li>Priority rendering</li>
+            </div>
+            {generatedImages.map((image) => (
+              <div className="mosaic__tile" key={image.prompt}>
+                <div className="landing__image-frame landing__image-frame--glow">
+                  <img src={image.src} alt={image.prompt} loading="lazy" />
+                </div>
+                <div className="mosaic__label">{image.prompt}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="flow" className="landing__section landing__section--flow">
+          <div className="landing__section-head">
+            <p className="landing__eyebrow">How it works</p>
+            <h2>Three quick steps</h2>
+          </div>
+          <div className="landing__flow-grid">
+            {quickSteps.map((step, index) => (
+              <div className="flow-step" key={step.title}>
+                <div className="flow-step__number">0{index + 1}</div>
+                <h3>{step.title}</h3>
+                <p>{step.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="pricing" className="landing__section landing__section--pricing">
+          <div className="landing__section-head">
+            <p className="landing__eyebrow">Pricing</p>
+            <h2>Start free, unlock unlimited sets</h2>
+          </div>
+          <div className="pricing-grid">
+            <div className="pricing-card">
+              <div className="pricing-card__badge">Starter</div>
+              <h3>First image</h3>
+              <p className="pricing-card__price">$0</p>
+              <p className="pricing-card__note">Sign in and generate one image on us.</p>
+              <ul className="pricing-card__list">
+                <li>1 free render</li>
+                <li>No watermark</li>
+                <li>Keep your look for later</li>
               </ul>
-              <button
-                className="pricing__button pricing__button--primary"
-                onClick={handleStart}
-              >
+              <button className="primary-button" onClick={handleStart}>
+                Claim free image
+              </button>
+            </div>
+            <div className="pricing-card pricing-card--highlight">
+              <div className="pricing-card__badge">Creator</div>
+              <h3>After the first</h3>
+              <p className="pricing-card__price">$20/mo</p>
+              <p className="pricing-card__note">Unlimited generation after your free try.</p>
+              <ul className="pricing-card__list">
+                <li>Unlimited outputs</li>
+                <li>Fast rendering queue</li>
+                <li>Consistent faces across prompts</li>
+              </ul>
+              <button className="primary-button" onClick={handleStart}>
                 Start generating
               </button>
             </div>
           </div>
         </section>
 
-        <section id="faq" className="landing__section">
+        <section id="faq" className="landing__section landing__section--faq">
           <div className="landing__section-head">
             <p className="landing__eyebrow">FAQ</p>
-            <h2>Answers before you start</h2>
-            <p className="landing__section-copy">
-              Quick hits on the most common questions about generating
-              contextual images with NanoGen.
-            </p>
+            <h2>Quick answers</h2>
           </div>
           <div className="faq">
-            <div className="faq__item">
-              <div className="faq__question">
-                How does it differ from ChatGPT?
-              </div>
-              <div className="faq__answer">
-                We generate multiple images from your reference and prompts,
-                keeping your look consistent across every shot—ChatGPT is
-                text-first.
-              </div>
-            </div>
             <div className="faq__item">
               <div className="faq__question">
                 Do I need to sign in to generate?
               </div>
               <div className="faq__answer">
-                Yes. Sign in/up to unlock your first free render; additional
-                images are billed per render.
+                Yes—sign in or create an account to unlock your first free
+                image.
               </div>
             </div>
             <div className="faq__item">
               <div className="faq__question">
-                How many reference images should I upload?
+                How many photos should I upload?
               </div>
               <div className="faq__answer">
-                Upload 1–3 clear photos with good lighting. We use them to lock
-                your face, outfit, and style for all generated scenes.
+                Upload 1–3 clear shots with good lighting to lock your look.
               </div>
             </div>
             <div className="faq__item">
-              <div className="faq__question">Can I edit prompts manually?</div>
+              <div className="faq__question">Are the outputs watermarked?</div>
               <div className="faq__answer">
-                Yes. Start with our suggested prompts or type your own to
-                control the setting, mood, and props.
+                No—download your generated images without watermarks.
+              </div>
+            </div>
+            <div className="faq__item">
+              <div className="faq__question">Can I edit the prompt?</div>
+              <div className="faq__answer">
+                Yes—start from the suggested prompt or type your own context.
               </div>
             </div>
           </div>

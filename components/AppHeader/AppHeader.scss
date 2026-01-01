@@ -2,10 +2,10 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: rgba(13, 17, 26, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 16px 24px;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 
   &-content {
     max-width: 1120px;
@@ -44,7 +44,7 @@
     margin: 0;
     font-size: 20px;
     font-weight: 700;
-    color: #0f172a;
+    color: #e2e8f0;
   }
 }
 
@@ -54,12 +54,12 @@
 
   &__inner {
     display: inline-flex;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.06);
     padding: 4px;
     border-radius: 14px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
-      0 10px 30px rgba(99, 102, 241, 0.12);
-    border: 1px solid var(--border);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 10px 30px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   &__button {
@@ -69,18 +69,18 @@
     border-radius: 12px;
     font-size: 13px;
     font-weight: 700;
-    color: #64748b;
+    color: #cbd5e1;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-      color: #0f172a;
+      color: #ffffff;
     }
 
     &.is-active {
-      background: linear-gradient(135deg, #6366f1, #7c3aed);
+      background: linear-gradient(135deg, #f97316, #fb923c);
       color: #ffffff;
-      box-shadow: 0 10px 22px rgba(99, 102, 241, 0.24);
+      box-shadow: 0 10px 22px rgba(249, 115, 22, 0.24);
     }
   }
 }
@@ -117,7 +117,7 @@
 
   &__options {
     display: inline-flex;
-    background: #f1f5f9;
+    background: rgba(255, 255, 255, 0.06);
     padding: 6px;
     gap: 6px;
     border-radius: 12px;
@@ -130,14 +130,14 @@
     border-radius: 8px;
     font-size: 11px;
     font-weight: 800;
-    color: #64748b;
+    color: #cbd5e1;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &.is-active {
-      background: #ffffff;
-      color: #2563eb;
-      box-shadow: 0 6px 12px rgba(37, 99, 235, 0.12);
+      background: rgba(249, 115, 22, 0.16);
+      color: #fb923c;
+      box-shadow: 0 6px 12px rgba(249, 115, 22, 0.2);
     }
   }
 }
@@ -153,16 +153,16 @@
     width: 40px;
     height: 40px;
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #64748b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-      background: #f8fafc;
-      color: #0f172a;
-      border-color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
     }
   }
 
@@ -171,10 +171,10 @@
     top: calc(100% + 8px);
     right: 0;
     min-width: 200px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: rgba(13, 17, 26, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
     padding: 12px;
     z-index: 100;
     animation: fadeIn 0.2s ease;
@@ -184,8 +184,8 @@
     padding: 8px 12px;
     font-size: 14px;
     font-weight: 600;
-    color: #0f172a;
-    border-bottom: 1px solid #e2e8f0;
+    color: #e2e8f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: 8px;
     word-break: break-all;
   }
@@ -195,7 +195,7 @@
     padding: 10px 12px;
     background: transparent;
     border: none;
-    color: #ef4444;
+    color: #fca5a5;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
