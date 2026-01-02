@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppMode,
@@ -43,6 +43,8 @@ import Results from "../components/Results/Results";
 import Footer from "../components/Footer/Footer";
 import ReferenceLibraryModal from "../components/DatasetModal/ReferenceLibraryModal";
 import PromptLibraryModal from "../components/DatasetModal/PromptLibraryModal";
+import SavedImagesPanel from "../components/Library/SavedImagesPanel";
+import SavedPromptsPanel from "../components/Library/SavedPromptsPanel";
 
 interface NameCaptureModalProps {
   isOpen: boolean;
@@ -165,6 +167,7 @@ const DashboardPage: React.FC = () => {
     type: "reference" | "prompt" | null;
     defaultValue: string;
   }>({ type: null, defaultValue: "" });
+  const [librarySort, setLibrarySort] = useState<"newest" | "oldest">("newest");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stripePlanLinks: Partial<Record<SubscriptionPlan, string>> = {
     basic: import.meta.env.STRIPE_LINK_BASIC || process.env.STRIPE_LINK_BASIC,
@@ -334,6 +337,32 @@ const DashboardPage: React.FC = () => {
       window.history.replaceState(null, "", newUrl);
     }
   }, [isPaymentUnlocked, session?.user?.id, planType]);
+
+  // All hooks must be called before any conditional returns
+  const sortedReferenceImages = useMemo(() => {
+    const flat =
+      referenceLibrary?.flatMap((set) =>
+        set.images.map((img) => ({
+          ...img,
+          setLabel: set.label,
+          setId: set.setId,
+          createdAt: img.createdAt || set.createdAt,
+        }))
+      ) || [];
+    return [...flat].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return librarySort === "newest" ? bTime - aTime : aTime - bTime;
+    });
+  }, [referenceLibrary, librarySort]);
+
+  const sortedPrompts = useMemo(() => {
+    return [...promptLibrary].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return librarySort === "newest" ? bTime - aTime : aTime - bTime;
+    });
+  }, [promptLibrary, librarySort]);
 
   // Show loading state while checking auth
   if (authStatus === "checking") {
@@ -948,103 +977,25 @@ const DashboardPage: React.FC = () => {
             </section>
 
             {activePanel === "saved" && (
-              <section className="card sidebar__saved card--ghost">
-                <div className="card__header">
-                  <div>
-                    <p className="sidebar__eyebrow">Saved</p>
-                    <h4 className="card__title">Libraries</h4>
-                  </div>
-                  <button
-                    onClick={() => setIsReferenceLibraryOpen(true)}
-                    className="card__action card__action--ghost"
-                  >
-                    View all
-                  </button>
-                </div>
-                <div className="sidebar__saved-grid">
-                  <div className="sidebar__saved-card">
-                    <div className="sidebar__saved-head">
-                      <span>Reference sets</span>
-                      <button
-                        onClick={() => setIsReferenceLibraryOpen(true)}
-                        className="link-button"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <div className="sidebar__saved-list custom-scrollbar">
-                      {isLibraryLoading ? (
-                        <p className="sidebar__empty">Loading saved sets...</p>
-                      ) : referenceLibrary.length === 0 ? (
-                        <p className="sidebar__empty">
-                          No saved references yet.
-                        </p>
-                      ) : (
-                        referenceLibrary.slice(0, 4).map((set) => (
-                          <button
-                            key={set.setId}
-                            className="sidebar__saved-item"
-                            onClick={() =>
-                              handleAddReferencesFromLibrary([set])
-                            }
-                            title="Load this reference set"
-                          >
-                            <div className="sidebar__saved-text">
-                              <span className="sidebar__saved-title">
-                                {set.label || "Untitled set"}
-                              </span>
-                              <span className="sidebar__saved-meta">
-                                {set.images.length} image
-                                {set.images.length === 1 ? "" : "s"}
-                              </span>
-                            </div>
-                            <span className="sidebar__chevron">↗</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                  <div className="sidebar__saved-card">
-                    <div className="sidebar__saved-head">
-                      <span>Prompt presets</span>
-                      <button
-                        onClick={() => setIsPromptLibraryOpen(true)}
-                        className="link-button"
-                      >
-                        Browse
-                      </button>
-                    </div>
-                    <div className="sidebar__saved-list custom-scrollbar">
-                      {isLibraryLoading ? (
-                        <p className="sidebar__empty">
-                          Loading saved prompts...
-                        </p>
-                      ) : promptLibrary.length === 0 ? (
-                        <p className="sidebar__empty">No saved prompts yet.</p>
-                      ) : (
-                        promptLibrary.slice(0, 4).map((preset) => (
-                          <button
-                            key={preset.id}
-                            className="sidebar__saved-item"
-                            onClick={() => handleUsePromptPreset(preset)}
-                            title="Apply this prompt preset"
-                          >
-                            <div className="sidebar__saved-text">
-                              <span className="sidebar__saved-title">
-                                {preset.title}
-                              </span>
-                              <span className="sidebar__saved-meta">
-                                Tap to apply
-                              </span>
-                            </div>
-                            <span className="sidebar__chevron">↗</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
+              <SavedImagesPanel
+                referenceLibrary={referenceLibrary}
+                isLoading={isLibraryLoading}
+                sortedImages={sortedReferenceImages}
+                sortDirection={librarySort}
+                onSortChange={setLibrarySort}
+                onSelectReferenceSet={handleAddReferencesFromLibrary}
+              />
+            )}
+
+            {activePanel === "references" && (
+              <SavedPromptsPanel
+                promptLibrary={promptLibrary}
+                isLoading={isLibraryLoading}
+                sortedPrompts={sortedPrompts}
+                sortDirection={librarySort}
+                onSortChange={setLibrarySort}
+                onSelectPromptPreset={handleUsePromptPreset}
+              />
             )}
 
             {(activePanel === "references" ||

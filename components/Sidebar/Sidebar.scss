@@ -222,6 +222,36 @@
     gap: 8px;
   }
 
+  &__section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__filter-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  &__filter-select {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-weight: 700;
+  }
+
   &__nav {
     display: grid;
     gap: 6px;
@@ -396,6 +426,82 @@
     &:active {
       transform: translateY(0);
     }
+  }
+
+  &__list {
+    margin-top: 4px;
+  }
+
+  &__image-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  &__image-thumb {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+    padding: 4px;
+    display: grid;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+  }
+
+  &__image-label {
+    font-size: 12px;
+    color: #cbd5e1;
+    text-align: left;
+  }
+
+  &__prompt-list {
+    display: grid;
+    gap: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  &__prompt-item {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: left;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+  }
+
+  &__prompt-title {
+    font-weight: 800;
+  }
+
+  &__prompt-meta {
+    font-size: 12px;
+    color: #94a3b8;
   }
 }
 

@@ -167,7 +167,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="sidebar__section">
-        <p className="sidebar__eyebrow">Panels</p>
+        <p className="sidebar__eyebrow">Saved</p>
         <nav className="sidebar__nav">
           <button
             className={`sidebar__nav-item ${
@@ -175,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             }`}
             onClick={() => onPanelChange("saved")}
           >
-            Saved
+            Images
           </button>
           <button
             className={`sidebar__nav-item ${
@@ -183,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             }`}
             onClick={() => onPanelChange("references")}
           >
-            References
+            Prompts
           </button>
         </nav>
       </div>
