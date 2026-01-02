@@ -80,9 +80,10 @@ const DashboardPage: React.FC = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stripePlanLinks: Partial<Record<SubscriptionPlan, string>> = {
-    basic: import.meta.env.STRIPE_LINK_BASIC,
-    pro: import.meta.env.STRIPE_LINK_PRO,
-    business: import.meta.env.STRIPE_LINK_BUSINESS,
+    basic: import.meta.env.STRIPE_LINK_BASIC || process.env.STRIPE_LINK_BASIC,
+    pro: import.meta.env.STRIPE_LINK_PRO || process.env.STRIPE_LINK_PRO,
+    business:
+      import.meta.env.STRIPE_LINK_BUSINESS || process.env.STRIPE_LINK_BUSINESS,
   };
 
   // Redirect to auth page if not authenticated
