@@ -962,7 +962,7 @@ const DashboardPage: React.FC = () => {
             {(activePanel === "references" || mode === "manual") && (
               <section className="card">
                 <div className="card__header">
-                  <h3 className="card__title">References</h3>
+                  <h3 className="card__title">1. References</h3>
                   <div className="card__actions">
                     <button
                       onClick={() => setIsReferenceLibraryOpen(true)}
@@ -1040,7 +1040,7 @@ const DashboardPage: React.FC = () => {
 
             {activePanel === "storyboard" && mode === "slideshow" && (
               <section className="card">
-                <h3 className="card__title">Slideshow Story</h3>
+                <h3 className="card__title">2. Slideshow Story</h3>
                 <div className="sidebar__panel-content">
                   <div>
                     <label className="field-label">Overall Topic</label>
@@ -1073,7 +1073,7 @@ const DashboardPage: React.FC = () => {
 
             {activePanel === "manual" && mode === "manual" && (
               <section className="card sidebar__panel">
-                <h3 className="card__title">Manual Scenarios</h3>
+                <h3 className="card__title">2. Manual Scenarios</h3>
                 <div className="prompt-actions">
                   <button
                     onClick={() => setIsPromptLibraryOpen(true)}

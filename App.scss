@@ -97,12 +97,12 @@ body {
       grid-template-columns: 300px 1fr;
     }
   }
-}
 
-.app__main {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 }
 
 .dashboard-pricing {
@@ -239,7 +239,7 @@ body {
     box-shadow: 0 16px 32px rgba(99, 102, 241, 0.32);
   }
 
-  &.primary-button--ghost {
+  &--ghost {
     background: transparent;
     color: #e2e8f0;
     border: 1px solid var(--border);
@@ -252,7 +252,7 @@ body {
     }
   }
 
-  &.primary-button--full {
+  &--full {
     width: 100%;
   }
 
@@ -263,13 +263,6 @@ body {
     transform: none;
     background: #e2e8f0;
     color: #94a3b8;
-  }
-
-  &--ghost {
-    background: #ffffff;
-    color: #0f172a;
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   }
 }
 
@@ -330,7 +323,6 @@ body {
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.18em;
-    text-transform: uppercase;
     color: #ffffff;
   }
 
