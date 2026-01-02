@@ -67,8 +67,19 @@ const NameCaptureModal: React.FC<NameCaptureModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onCancel();
+    }
+  };
+
   return (
-    <div className="dataset-modal__backdrop" role="dialog" aria-modal="true">
+    <div
+      className="dataset-modal__backdrop"
+      role="dialog"
+      aria-modal="true"
+      onClick={handleBackdropClick}
+    >
       <div className="dataset-modal">
         <div className="dataset-modal__header">
           <div>

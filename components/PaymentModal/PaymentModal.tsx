@@ -40,12 +40,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     },
   ];
 
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
     <div
       className="payment-modal__backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby="payment-modal-title"
+      onClick={handleBackdropClick}
     >
       <div className="payment-modal">
         <button

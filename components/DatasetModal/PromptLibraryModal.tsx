@@ -19,12 +19,19 @@ const PromptLibraryModal: React.FC<PromptLibraryModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
     <div
       className="dataset-modal__backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Prompt library"
+      onClick={handleBackdropClick}
     >
       <div className="dataset-modal">
         <div className="dataset-modal__header">
