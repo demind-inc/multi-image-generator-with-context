@@ -1,194 +1,224 @@
-import React from "react";
-import { AppMode, ReferenceImage } from "../../types";
+import React, { useEffect, useRef, useState } from "react";
+import { AppMode } from "../../types";
+import Footer from "../Footer/Footer";
 import "./Sidebar.scss";
+
+export type PanelKey = "saved" | "references" | "storyboard" | "manual";
 
 interface SidebarProps {
   mode: AppMode;
-  references: ReferenceImage[];
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  onUploadClick: () => void;
-  onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onRemoveReference: (id: string) => void;
-  onSaveReferences: () => void;
-  isSavingReferences: boolean;
-  onOpenReferenceLibrary: () => void;
-  topic: string;
-  onTopicChange: (value: string) => void;
-  onGenerateStoryboard: () => void;
-  isCreatingStoryboard: boolean;
-  manualPrompts: string;
-  onManualPromptsChange: (value: string) => void;
-  onSavePrompt: () => void;
-  isSavingPrompt: boolean;
-  onOpenPromptLibrary: () => void;
+  onModeChange: (mode: AppMode) => void;
+  activePanel: PanelKey;
+  onPanelChange: (panel: PanelKey) => void;
+  onOpenSettings: () => void;
+  displayEmail: string;
+  isSubscribed: boolean;
+  subscriptionLabel?: string;
+  subscriptionPrice?: string | null;
+  planType?: string;
+  remainingCredits?: number;
+  totalCredits?: number;
+  onOpenBilling?: () => void;
+  onCancelSubscription?: () => void;
+  onSignOut: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   mode,
-  references,
-  fileInputRef,
-  onUploadClick,
-  onFileChange,
-  onRemoveReference,
-  onSaveReferences,
-  isSavingReferences,
-  onOpenReferenceLibrary,
-  topic,
-  onTopicChange,
-  onGenerateStoryboard,
-  isCreatingStoryboard,
-  manualPrompts,
-  onManualPromptsChange,
-  onSavePrompt,
-  isSavingPrompt,
-  onOpenPromptLibrary,
+  onModeChange,
+  activePanel,
+  onPanelChange,
+  onOpenSettings,
+  displayEmail,
+  isSubscribed,
+  subscriptionLabel,
+  subscriptionPrice,
+  planType,
+  remainingCredits,
+  totalCredits,
+  onOpenBilling,
+  onCancelSubscription,
+  onSignOut,
 }) => {
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+
+    if (isAccountMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAccountMenuOpen]);
+
   return (
     <div className="sidebar custom-scrollbar">
-      <section className="card">
-        <div className="card__header">
-          <h3 className="card__title">References</h3>
-          <div className="card__actions">
+      <div className="sidebar__header">
+        <div className="brand brand--compact">
+          <div className="brand__icon">
+            <img
+              src="/assets/images/logo.png"
+              alt="NanoGen AI Logo"
+              className="brand__icon-image"
+            />
+          </div>
+          <div className="brand__text">
+            <p className="brand__eyebrow">Workspace</p>
+            <h3 className="brand__title">NanoGen AI</h3>
+          </div>
+        </div>
+        <div className="sidebar__header-actions">
+          <div className="sidebar__profile" ref={accountMenuRef}>
             <button
-              onClick={onOpenReferenceLibrary}
-              className="card__action card__action--ghost"
+              className="sidebar__profile-btn"
+              onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+              title="Account"
             >
-              Dataset
-            </button>
-            <button onClick={onUploadClick} className="card__action">
-              Upload
-            </button>
-          </div>
-        </div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          multiple
-          className="hidden-input"
-          accept="image/*"
-          onChange={onFileChange}
-        />
-        <div className="reference-actions">
-          <button
-            onClick={onSaveReferences}
-            disabled={isSavingReferences || references.length === 0}
-            className="chip-button"
-            title="Save current references for reuse"
-          >
-            {isSavingReferences ? "Saving..." : "Save to dataset"}
-          </button>
-        </div>
-        {references.length === 0 ? (
-          <div onClick={onUploadClick} className="references__placeholder">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            <div>Add Character Images</div>
-          </div>
-        ) : (
-          <div className="references__grid">
-            {references.map((ref) => (
-              <div key={ref.id} className="reference-thumb">
-                <img src={ref.data} alt="Reference" />
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </button>
+            {isAccountMenuOpen && (
+              <div className="sidebar__profile-menu">
+                <div className="sidebar__profile-email">{displayEmail}</div>
+                <div className="sidebar__profile-sub">
+                  <p className="sidebar__profile-label">
+                    {subscriptionLabel ||
+                      (isSubscribed ? "Subscribed" : "Free")}
+                  </p>
+                  <p className="sidebar__profile-meta">
+                    {isSubscribed
+                      ? subscriptionPrice || "Active"
+                      : "3 credits included"}
+                  </p>
+                  <div className="sidebar__profile-actions">
+                    {isSubscribed ? (
+                      <button onClick={onCancelSubscription}>
+                        Cancel subscription
+                      </button>
+                    ) : (
+                      <button onClick={onOpenBilling}>Upgrade</button>
+                    )}
+                  </div>
+                </div>
                 <button
-                  onClick={() => onRemoveReference(ref.id)}
-                  className="reference-thumb__remove"
-                  aria-label="Remove reference"
+                  className="sidebar__profile-signout"
+                  onClick={onSignOut}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  Sign out
                 </button>
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </section>
+        </div>
+      </div>
 
-      <section className="card sidebar__panel">
-        {mode === "slideshow" ? (
-          <>
-            <h3 className="card__title">Slideshow Story</h3>
-            <div className="sidebar__panel-content">
-              <div>
-                <label className="field-label">Overall Topic</label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => onTopicChange(e.target.value)}
-                  placeholder="e.g. Benefits of Yoga"
-                  className="text-input"
-                />
-              </div>
-              <button
-                onClick={onGenerateStoryboard}
-                disabled={isCreatingStoryboard || !topic.trim()}
-                className="storyboard-button"
-              >
-                {isCreatingStoryboard
-                  ? "Creating Script..."
-                  : "Generate Storyboard"}
-              </button>
-              <div className="sidebar__helper">
-                <p className="helper-text">
-                  This will automatically create a title slide, informative
-                  slides, and a CTA slide.
-                </p>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <h3 className="card__title">Manual Scenarios</h3>
-            <div className="prompt-actions">
-              <button
-                onClick={onOpenPromptLibrary}
-                className="chip-button chip-button--ghost"
-              >
-                Use saved prompt
-              </button>
-              <button
-                onClick={onSavePrompt}
-                disabled={isSavingPrompt || !manualPrompts.trim()}
-                className="chip-button"
-              >
-                {isSavingPrompt ? "Saving..." : "Save prompt"}
-              </button>
-            </div>
-            <textarea
-              value={manualPrompts}
-              onChange={(e) => onManualPromptsChange(e.target.value)}
-              placeholder="One scene prompt per line..."
-              className="textarea-input"
-            />
-            <p className="helper-text">
-              Describe actions, emotions, and props.
-            </p>
-          </>
+      <div className="sidebar__section">
+        <p className="sidebar__eyebrow">Mode</p>
+        <div className="sidebar__mode-toggle">
+          <button
+            className={`sidebar__mode-link ${
+              mode === "manual" && activePanel === "manual" ? "is-active" : ""
+            }`}
+            onClick={() => {
+              onModeChange("manual");
+              onPanelChange("manual");
+            }}
+          >
+            Multi image generation
+          </button>
+          <button
+            className={`sidebar__mode-link ${
+              mode === "slideshow" && activePanel === "storyboard"
+                ? "is-active"
+                : ""
+            }`}
+            onClick={() => {
+              onModeChange("slideshow");
+              onPanelChange("storyboard");
+            }}
+          >
+            Slideshow
+          </button>
+        </div>
+      </div>
+
+      <div className="sidebar__section">
+        <p className="sidebar__eyebrow">Saved</p>
+        <nav className="sidebar__nav">
+          <button
+            className={`sidebar__nav-item ${
+              activePanel === "saved" ? "is-active" : ""
+            }`}
+            onClick={() => onPanelChange("saved")}
+          >
+            Images
+          </button>
+          <button
+            className={`sidebar__nav-item ${
+              activePanel === "references" ? "is-active" : ""
+            }`}
+            onClick={() => onPanelChange("references")}
+          >
+            Prompts
+          </button>
+        </nav>
+      </div>
+
+      <div className="sidebar__footer">
+        <div className="sidebar__plan-info">
+          <div className="sidebar__plan-row">
+            <span className="sidebar__plan-label">Plan</span>
+            <span className="sidebar__plan-value">
+              {isSubscribed && planType ? planType.toUpperCase() : "Free"}
+            </span>
+          </div>
+          <div className="sidebar__plan-row">
+            <span className="sidebar__plan-label">Credits</span>
+            <span className="sidebar__plan-value">
+              {isSubscribed
+                ? remainingCredits !== undefined && totalCredits !== undefined
+                  ? `${remainingCredits}/${totalCredits}`
+                  : "--/--"
+                : remainingCredits !== undefined
+                ? `${remainingCredits}/3`
+                : "3"}
+            </span>
+          </div>
+        </div>
+        {!isSubscribed && onOpenBilling && (
+          <button className="sidebar__upgrade-btn" onClick={onOpenBilling}>
+            Upgrade
+          </button>
         )}
-      </section>
+      </div>
+
+      <div className="sidebar__footer-section">
+        <Footer />
+      </div>
     </div>
   );
 };

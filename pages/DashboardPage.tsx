@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppMode,
@@ -36,15 +36,89 @@ import {
   fetchReferenceLibrary,
   savePromptPreset,
   saveReferenceImages,
+  updatePromptPreset,
+  updateReferenceSetLabel,
 } from "../services/libraryService";
-import AppHeader from "../components/AppHeader/AppHeader";
-import Hero from "../components/Hero/Hero";
 import PaymentModal from "../components/PaymentModal/PaymentModal";
-import Sidebar from "../components/Sidebar/Sidebar";
+import Sidebar, { PanelKey } from "../components/Sidebar/Sidebar";
 import Results from "../components/Results/Results";
 import Footer from "../components/Footer/Footer";
 import ReferenceLibraryModal from "../components/DatasetModal/ReferenceLibraryModal";
 import PromptLibraryModal from "../components/DatasetModal/PromptLibraryModal";
+import SavedImagesPanel from "../components/Library/SavedImagesPanel";
+import SavedPromptsPanel from "../components/Library/SavedPromptsPanel";
+
+interface NameCaptureModalProps {
+  isOpen: boolean;
+  title: string;
+  defaultValue: string;
+  onSave: (value: string) => void;
+  onCancel: () => void;
+}
+
+const NameCaptureModal: React.FC<NameCaptureModalProps> = ({
+  isOpen,
+  title,
+  defaultValue,
+  onSave,
+  onCancel,
+}) => {
+  const [value, setValue] = useState(defaultValue);
+
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onCancel();
+    }
+  };
+
+  return (
+    <div
+      className="dataset-modal__backdrop"
+      role="dialog"
+      aria-modal="true"
+      onClick={handleBackdropClick}
+    >
+      <div className="dataset-modal">
+        <div className="dataset-modal__header">
+          <div>
+            <p className="dataset-modal__eyebrow">Save</p>
+            <h3 className="dataset-modal__title">{title}</h3>
+          </div>
+          <button className="dataset-modal__close" onClick={onCancel}>
+            ×
+          </button>
+        </div>
+        <div className="dataset-modal__body">
+          <label className="label">Name</label>
+          <input
+            className="input"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Enter a name"
+            autoFocus
+          />
+        </div>
+        <div className="dataset-modal__footer">
+          <button className="primary-button" onClick={() => onSave(value)}>
+            Save
+          </button>
+          <button
+            className="primary-button primary-button--ghost"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const DashboardPage: React.FC = () => {
   const { session, authStatus, displayEmail, signOut } = useAuth();
@@ -57,7 +131,12 @@ const DashboardPage: React.FC = () => {
     business: "$79/mo",
   };
 
-  const [mode, setMode] = useState<AppMode>("slideshow");
+  const [activePanel, setActivePanel] = useState<PanelKey>("storyboard");
+  // Derive mode from activePanel
+  const mode: AppMode = useMemo(() => {
+    return activePanel === "storyboard" ? "slideshow" : "manual";
+  }, [activePanel]);
+
   const [topic, setTopic] = useState<string>("");
   const [manualPrompts, setManualPrompts] = useState<string>(
     "Boy looking confused with question marks around him\nBoy feeling lonely at a cafe table\nBoy looking angry while listening to something"
@@ -90,6 +169,11 @@ const DashboardPage: React.FC = () => {
   >(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [nameModal, setNameModal] = useState<{
+    type: "reference" | "prompt" | null;
+    defaultValue: string;
+  }>({ type: null, defaultValue: "" });
+  const [librarySort, setLibrarySort] = useState<"newest" | "oldest">("newest");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stripePlanLinks: Partial<Record<SubscriptionPlan, string>> = {
     basic: import.meta.env.STRIPE_LINK_BASIC || process.env.STRIPE_LINK_BASIC,
@@ -260,6 +344,15 @@ const DashboardPage: React.FC = () => {
     }
   }, [isPaymentUnlocked, session?.user?.id, planType]);
 
+  // All hooks must be called before any conditional returns
+  const sortedPrompts = useMemo(() => {
+    return [...promptLibrary].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return librarySort === "newest" ? bTime - aTime : aTime - bTime;
+    });
+  }, [promptLibrary, librarySort]);
+
   // Show loading state while checking auth
   if (authStatus === "checking") {
     return (
@@ -299,26 +392,6 @@ const DashboardPage: React.FC = () => {
   const displayUsageRemaining = hasSubscription
     ? usage?.remaining ?? planCreditLimit
     : undefined;
-  const dashboardPlans = [
-    {
-      badge: "Basic",
-      price: "$9/mo",
-      credits: "60 credits/month",
-      plan: "basic" as SubscriptionPlan,
-    },
-    {
-      badge: "Pro",
-      price: "$29/mo",
-      credits: "180 credits/month",
-      plan: "pro" as SubscriptionPlan,
-    },
-    {
-      badge: "Business",
-      price: "$79/mo",
-      credits: "600 credits/month",
-      plan: "business" as SubscriptionPlan,
-    },
-  ];
 
   const triggerUpload = () => fileInputRef.current?.click();
 
@@ -346,7 +419,7 @@ const DashboardPage: React.FC = () => {
     setReferences((prev) => prev.filter((r) => r.id !== id));
   };
 
-  const handleSaveReferences = async () => {
+  const handleSaveReferences = async (label?: string) => {
     const userId = session?.user?.id;
     if (!userId) {
       alert("Unable to verify your account. Please sign in again.");
@@ -357,12 +430,6 @@ const DashboardPage: React.FC = () => {
       alert("Upload a reference image first.");
       return;
     }
-
-    const label =
-      window.prompt(
-        "Name this reference set",
-        `Reference set (${new Date().toLocaleDateString()})`
-      ) || undefined;
 
     setIsSavingReferences(true);
     try {
@@ -409,7 +476,7 @@ const DashboardPage: React.FC = () => {
     setReferences((prev) => [...prev, ...mapped]);
   };
 
-  const handleSavePromptPreset = async () => {
+  const handleSavePromptPreset = async (title?: string) => {
     const userId = session?.user?.id;
     const content = manualPrompts.trim();
 
@@ -423,12 +490,6 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    const title =
-      window.prompt(
-        "Name this prompt preset",
-        `Prompt preset (${new Date().toLocaleDateString()})`
-      ) || undefined;
-
     setIsSavingPrompt(true);
     try {
       const saved = await savePromptPreset(userId, content, title);
@@ -440,6 +501,104 @@ const DashboardPage: React.FC = () => {
       setIsSavingPrompt(false);
     }
   };
+
+  const handleUpdatePromptPreset = async (
+    presetId: string,
+    title: string,
+    content: string
+  ) => {
+    const userId = session?.user?.id;
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+
+    if (!userId) {
+      alert("Unable to verify your account. Please sign in again.");
+      return;
+    }
+
+    if (!trimmedTitle || !trimmedContent) {
+      alert("Please provide both a title and prompt content.");
+      return;
+    }
+
+    try {
+      const updated = await updatePromptPreset(
+        userId,
+        presetId,
+        trimmedTitle,
+        trimmedContent
+      );
+      setPromptLibrary((prev) =>
+        prev.map((prompt) => (prompt.id === presetId ? updated : prompt))
+      );
+    } catch (error) {
+      console.error("Failed to update prompt preset:", error);
+      alert("Could not update prompt preset. Please try again.");
+    }
+  };
+
+  const handleUpdateReferenceSetLabel = async (
+    setId: string,
+    label: string
+  ) => {
+    const userId = session?.user?.id;
+    const trimmedLabel = label.trim();
+
+    if (!userId) {
+      alert("Unable to verify your account. Please sign in again.");
+      return;
+    }
+
+    if (!trimmedLabel) {
+      alert("Please provide a name for this reference set.");
+      return;
+    }
+
+    try {
+      await updateReferenceSetLabel(userId, setId, trimmedLabel);
+      setReferenceLibrary((prev) =>
+        prev.map((set) =>
+          set.setId === setId
+            ? {
+                ...set,
+                label: trimmedLabel,
+                images: set.images.map((img) => ({
+                  ...img,
+                  label: trimmedLabel,
+                })),
+              }
+            : set
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update reference set label:", error);
+      alert("Could not update reference set. Please try again.");
+    }
+  };
+
+  const openReferenceNameModal = () =>
+    setNameModal({
+      type: "reference",
+      defaultValue: `Reference set (${new Date().toLocaleDateString()})`,
+    });
+
+  const openPromptNameModal = () =>
+    setNameModal({
+      type: "prompt",
+      defaultValue: `Prompt preset (${new Date().toLocaleDateString()})`,
+    });
+
+  const handleNameModalSave = async (value: string) => {
+    const trimmed = value.trim();
+    if (nameModal.type === "reference") {
+      await handleSaveReferences(trimmed || undefined);
+    } else if (nameModal.type === "prompt") {
+      await handleSavePromptPreset(trimmed || undefined);
+    }
+    setNameModal({ type: null, defaultValue: "" });
+  };
+
+  const closeNameModal = () => setNameModal({ type: null, defaultValue: "" });
 
   const handleUsePromptPreset = (preset: PromptPreset) => {
     setManualPrompts(preset.content);
@@ -792,117 +951,322 @@ const DashboardPage: React.FC = () => {
         <span className="app__orb app__orb--right" />
       </div>
 
-      <AppHeader
-        mode={mode}
-        onModeChange={setMode}
-        displayEmail={displayEmail}
-        onSignOut={signOut}
-        referencesCount={references.length}
-        totalScenes={totalScenes}
-        size={size}
-        onSizeChange={setSize}
-        isGenerating={isGenerating}
-        onGenerate={startGeneration}
-        disableGenerate={disableGenerate}
-        usageRemaining={displayUsageRemaining}
-        usageLimit={displayUsageLimit}
-        isUsageLoading={isUsageLoading}
-        isSubscribed={hasSubscription}
-        freeCreditsRemaining={freeCreditsRemaining}
-        subscriptionLabel={
-          hasSubscription ? `Plan: ${planType.toUpperCase()}` : "Free"
-        }
-        subscriptionPrice={hasSubscription ? PLAN_PRICE_LABEL[planType] : null}
-        onOpenBilling={() => setIsPaymentModalOpen(true)}
-        onCancelSubscription={async () => {
-          const userId = session?.user?.id;
-          if (!userId) return;
-          try {
-            await cancelStripeSubscription(stripeSubscriptionId);
-            await deactivateSubscription(userId);
-            setIsPaymentUnlocked(false);
-            setPlanLockedFromSubscription(false);
-            setPlanType("basic");
-            await refreshUsage(userId);
-          } catch (error) {
-            console.error("Failed to cancel subscription:", error);
-            alert("Could not cancel subscription. Please try again.");
-          }
-        }}
-      />
-
       <main className="app__body">
-        <Hero
-          referencesCount={references.length}
-          generatedCount={generatedCount}
-          size={size}
-          mode={mode}
-          isGenerating={isGenerating}
-          disableGenerate={disableGenerate}
-          onUploadClick={triggerUpload}
-          onGenerate={startGeneration}
-          usageRemaining={displayUsageRemaining}
-          usageLimit={displayUsageLimit}
-          isUsageLoading={isUsageLoading}
-          isSubscribed={hasSubscription}
-          freeCreditsRemaining={freeCreditsRemaining}
-        />
-
         <div className="app__content">
           <Sidebar
             mode={mode}
-            references={references}
-            fileInputRef={fileInputRef}
-            onUploadClick={triggerUpload}
-            onFileChange={handleFileUpload}
-            onRemoveReference={removeReference}
-            onSaveReferences={handleSaveReferences}
-            isSavingReferences={isSavingReferences}
-            onOpenReferenceLibrary={() => setIsReferenceLibraryOpen(true)}
-            topic={topic}
-            onTopicChange={setTopic}
-            onGenerateStoryboard={handleGenerateStoryboard}
-            isCreatingStoryboard={isCreatingStoryboard}
-            manualPrompts={manualPrompts}
-            onManualPromptsChange={setManualPrompts}
-            onSavePrompt={handleSavePromptPreset}
-            isSavingPrompt={isSavingPrompt}
-            onOpenPromptLibrary={() => setIsPromptLibraryOpen(true)}
+            onModeChange={(newMode) => {
+              setActivePanel(newMode === "slideshow" ? "storyboard" : "manual");
+            }}
+            activePanel={activePanel}
+            onPanelChange={(panel) => {
+              setActivePanel(panel);
+            }}
+            onOpenSettings={() => setIsPaymentModalOpen(true)}
+            displayEmail={displayEmail}
+            isSubscribed={hasSubscription}
+            subscriptionLabel={
+              hasSubscription ? `Plan: ${planType.toUpperCase()}` : "Free"
+            }
+            subscriptionPrice={
+              hasSubscription ? PLAN_PRICE_LABEL[planType] : null
+            }
+            planType={hasSubscription ? planType : undefined}
+            remainingCredits={
+              hasSubscription ? displayUsageRemaining : freeCreditsRemaining
+            }
+            totalCredits={hasSubscription ? displayUsageLimit : undefined}
+            onOpenBilling={() => setIsPaymentModalOpen(true)}
+            onCancelSubscription={async () => {
+              const userId = session?.user?.id;
+              if (!userId) return;
+              try {
+                await cancelStripeSubscription(stripeSubscriptionId);
+                await deactivateSubscription(userId);
+                setIsPaymentUnlocked(false);
+                setPlanLockedFromSubscription(false);
+                setPlanType("basic");
+                await refreshUsage(userId);
+              } catch (error) {
+                console.error("Failed to cancel subscription:", error);
+                alert("Could not cancel subscription. Please try again.");
+              }
+            }}
+            onSignOut={signOut}
           />
 
-          <Results
-            mode={mode}
-            results={results}
-            isGenerating={isGenerating}
-            onRegenerate={handleRegenerate}
-          />
-        </div>
-
-        {!hasSubscription && (
-          <section className="dashboard-pricing">
-            <h3>Upgrade for more credits</h3>
-            <div className="dashboard-pricing__grid">
-              {dashboardPlans.map((planCard) => (
-                <div className="dashboard-pricing__card" key={planCard.plan}>
-                  <p className="dashboard-pricing__badge">{planCard.badge}</p>
-                  <p className="dashboard-pricing__price">{planCard.price}</p>
-                  <p className="dashboard-pricing__credits">
-                    {planCard.credits}
+          <div className="app__main">
+            <input
+              type="file"
+              ref={fileInputRef}
+              multiple
+              className="hidden-input"
+              accept="image/*"
+              onChange={handleFileUpload}
+            />
+            <section className="card dashboard-summary">
+              <div className="dashboard-summary__metrics">
+                <div className="metric-card">
+                  <p className="metric-card__value">
+                    {isUsageLoading
+                      ? "..."
+                      : hasSubscription
+                      ? displayUsageLimit
+                        ? `${
+                            displayUsageRemaining ?? displayUsageLimit
+                          }/${displayUsageLimit}`
+                        : "--/--"
+                      : typeof freeCreditsRemaining === "number"
+                      ? `${freeCreditsRemaining}/3`
+                      : "3"}
                   </p>
-                  <button
-                    className="primary-button"
-                    onClick={() => {
-                      setPlanType(planCard.plan);
-                      setIsPaymentModalOpen(true);
-                    }}
-                  >
-                    Choose {planCard.badge}
-                  </button>
+                  <p className="metric-card__label">
+                    {hasSubscription ? "Credits left" : "Free credits"}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+                <div className="metric-card">
+                  <p className="metric-card__value">{references.length}</p>
+                  <p className="metric-card__label">References</p>
+                </div>
+                <div className="metric-card">
+                  <p className="metric-card__value">{totalScenes}</p>
+                  <p className="metric-card__label">Scenes</p>
+                </div>
+                <div className="metric-card">
+                  <p className="metric-card__value">{generatedCount}</p>
+                  <p className="metric-card__label">Rendered</p>
+                </div>
+                <div className="metric-card">
+                  <p className="metric-card__value">{size}</p>
+                  <p className="metric-card__label">Resolution</p>
+                </div>
+              </div>
+            </section>
+
+            {activePanel === "saved" && (
+              <SavedImagesPanel
+                referenceLibrary={referenceLibrary}
+                isLoading={isLibraryLoading}
+                sortDirection={librarySort}
+                onSortChange={setLibrarySort}
+                onSelectReferenceSet={handleAddReferencesFromLibrary}
+                onSaveNewSet={async (images, label) => {
+                  const userId = session?.user?.id;
+                  if (!userId) {
+                    alert(
+                      "Unable to verify your account. Please sign in again."
+                    );
+                    return;
+                  }
+                  await saveReferenceImages(userId, images, label);
+                  await refreshReferenceLibrary(userId);
+                }}
+                onUpdateReferenceSet={handleUpdateReferenceSetLabel}
+              />
+            )}
+
+            {activePanel === "references" && (
+              <SavedPromptsPanel
+                promptLibrary={promptLibrary}
+                isLoading={isLibraryLoading}
+                sortedPrompts={sortedPrompts}
+                sortDirection={librarySort}
+                onSortChange={setLibrarySort}
+                onSelectPromptPreset={handleUsePromptPreset}
+                onSaveNewPrompt={async (title, content) => {
+                  const userId = session?.user?.id;
+                  if (!userId) {
+                    alert(
+                      "Unable to verify your account. Please sign in again."
+                    );
+                    return;
+                  }
+                  const saved = await savePromptPreset(userId, content, title);
+                  setPromptLibrary((prev) => [saved, ...prev]);
+                }}
+                onUpdatePromptPreset={handleUpdatePromptPreset}
+              />
+            )}
+
+            {(activePanel === "storyboard" || activePanel === "manual") && (
+              <section className="card">
+                <div className="card__header">
+                  <h3 className="card__title">1. References</h3>
+                  <div className="card__actions">
+                    <button
+                      onClick={() => setIsReferenceLibraryOpen(true)}
+                      className="card__action card__action--ghost"
+                    >
+                      Dataset
+                    </button>
+                    <button onClick={triggerUpload} className="card__action">
+                      Upload
+                    </button>
+                    <button
+                      onClick={openReferenceNameModal}
+                      disabled={isSavingReferences || references.length === 0}
+                      className="card__action"
+                      title="Save current references for reuse"
+                    >
+                      {isSavingReferences ? "Saving..." : "Save to dataset"}
+                    </button>
+                  </div>
+                </div>
+                {references.length === 0 ? (
+                  <div
+                    onClick={triggerUpload}
+                    className="references__placeholder"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <div>Add Character Images</div>
+                  </div>
+                ) : (
+                  <div className="references__grid">
+                    {references.map((ref) => (
+                      <div key={ref.id} className="reference-thumb">
+                        <img src={ref.data} alt="Reference" />
+                        <button
+                          onClick={() => removeReference(ref.id)}
+                          className="reference-thumb__remove"
+                          aria-label="Remove reference"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {activePanel === "storyboard" && (
+              <section className="card">
+                <h3 className="card__title">2. Slideshow Story</h3>
+                <div className="sidebar__panel-content">
+                  <div>
+                    <label className="label">Overall Topic</label>
+                    <input
+                      type="text"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder="e.g. Benefits of Yoga"
+                      className="input"
+                    />
+                  </div>
+                  <button
+                    onClick={handleGenerateStoryboard}
+                    disabled={isCreatingStoryboard || !topic.trim()}
+                    className="button button--storyboard"
+                  >
+                    {isCreatingStoryboard
+                      ? "Creating Script..."
+                      : "Generate Storyboard"}
+                  </button>
+                  <div className="sidebar__helper">
+                    <p className="text text--helper">
+                      This will automatically create a title slide, informative
+                      slides, and a CTA slide.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {activePanel === "manual" && (
+              <section className="card sidebar__panel">
+                <div className="card__header">
+                  <h3 className="card__title">2. Manual Scenarios</h3>
+                  <div className="card__actions">
+                    <button
+                      onClick={() => setIsPromptLibraryOpen(true)}
+                      className="card__action card__action--ghost"
+                    >
+                      Use saved prompt
+                    </button>
+                    <button
+                      onClick={openPromptNameModal}
+                      disabled={isSavingPrompt || !manualPrompts.trim()}
+                      className="card__action"
+                    >
+                      {isSavingPrompt ? "Saving..." : "Save prompt"}
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={manualPrompts}
+                  onChange={(e) => setManualPrompts(e.target.value)}
+                  placeholder="One scene prompt per line..."
+                  className="input input--textarea"
+                />
+                <p className="text text--helper">
+                  Describe actions, emotions, and props.
+                </p>
+              </section>
+            )}
+
+            {activePanel !== "saved" && activePanel !== "references" && (
+              <>
+                {results.length > 0 || isGenerating ? (
+                  <Results
+                    mode={mode}
+                    results={results}
+                    isGenerating={isGenerating}
+                    onRegenerate={handleRegenerate}
+                  />
+                ) : (
+                  <button
+                    onClick={startGeneration}
+                    disabled={disableGenerate}
+                    className="primary-button primary-button--full"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
+                    </svg>
+                    Generate
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </main>
 
       <ReferenceLibraryModal
@@ -921,14 +1285,25 @@ const DashboardPage: React.FC = () => {
         onSelect={handleUsePromptPreset}
       />
 
+      <NameCaptureModal
+        isOpen={nameModal.type !== null}
+        title={
+          nameModal.type === "reference"
+            ? "Name this reference set"
+            : "Name this prompt preset"
+        }
+        defaultValue={nameModal.defaultValue}
+        onSave={handleNameModalSave}
+        onCancel={closeNameModal}
+      />
+
       <PaymentModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         planType={planType}
         paymentUrls={stripePlanLinks}
+        onPlanSelect={(plan) => setPlanType(plan)}
       />
-
-      <Footer />
     </div>
   );
 };

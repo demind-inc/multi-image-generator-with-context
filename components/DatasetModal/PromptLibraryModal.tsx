@@ -19,12 +19,19 @@ const PromptLibraryModal: React.FC<PromptLibraryModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
     <div
       className="dataset-modal__backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Prompt library"
+      onClick={handleBackdropClick}
     >
       <div className="dataset-modal">
         <div className="dataset-modal__header">
@@ -43,7 +50,7 @@ const PromptLibraryModal: React.FC<PromptLibraryModalProps> = ({
         {isLoading ? (
           <div className="dataset-modal__empty">
             <div className="dataset-modal__spinner" />
-            <p className="helper-text" style={{ margin: 0 }}>
+            <p className="text text--helper" style={{ margin: 0 }}>
               Loading saved prompts...
             </p>
           </div>
@@ -51,7 +58,7 @@ const PromptLibraryModal: React.FC<PromptLibraryModalProps> = ({
           <div className="dataset-modal__empty">
             <div className="dataset-modal__empty-icon">📝</div>
             <p>No saved prompts yet</p>
-            <p className="helper-text" style={{ margin: 0 }}>
+            <p className="text text--helper" style={{ margin: 0 }}>
               Save your current prompt list for quick reuse.
             </p>
           </div>
@@ -86,7 +93,10 @@ const PromptLibraryModal: React.FC<PromptLibraryModalProps> = ({
         )}
 
         <div className="dataset-modal__footer">
-          <button className="primary-button primary-button--ghost" onClick={onClose}>
+          <button
+            className="primary-button primary-button--ghost"
+            onClick={onClose}
+          >
             Close
           </button>
         </div>

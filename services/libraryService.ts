@@ -213,3 +213,57 @@ export async function fetchPromptLibrary(
     })) ?? []
   );
 }
+
+export async function updatePromptPreset(
+  userId: string,
+  presetId: string,
+  title: string,
+  content: string
+): Promise<PromptPreset> {
+  const supabase = getSupabaseClient();
+  const trimmedTitle = title.trim() || DEFAULT_PROMPT_TITLE;
+  const { data, error } = await supabase
+    .from("prompt_library")
+    .update({
+      title: trimmedTitle,
+      prompt_text: content,
+    } as Partial<PromptLibraryInsert>)
+    .eq("id", presetId)
+    .eq("user_id", userId)
+    .select("id, title, prompt_text, created_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Failed to update prompt preset");
+  }
+
+  const row = data as any;
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.prompt_text,
+    createdAt: row.created_at,
+  };
+}
+
+export async function updateReferenceSetLabel(
+  userId: string,
+  setId: string,
+  label: string
+): Promise<void> {
+  const supabase = getSupabaseClient();
+  const trimmedLabel = label.trim() || DEFAULT_REFERENCE_LABEL;
+  const { error } = await supabase
+    .from("reference_library")
+    .update({ label: trimmedLabel } as Partial<ReferenceLibraryInsert>)
+    .eq("set_id", setId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+}
