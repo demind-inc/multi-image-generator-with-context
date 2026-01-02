@@ -1,6 +1,63 @@
 import React, { useMemo, useState, useRef } from "react";
 import { ReferenceSet, ReferenceImage } from "../../types";
 
+interface ImageExpandModalProps {
+  isOpen: boolean;
+  imageUrl: string;
+  onClose: () => void;
+}
+
+const ImageExpandModal: React.FC<ImageExpandModalProps> = ({
+  isOpen,
+  imageUrl,
+  onClose,
+}) => {
+  if (!isOpen) return null;
+
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      className="image-expand-modal__backdrop"
+      role="dialog"
+      aria-modal="true"
+      onClick={handleBackdropClick}
+    >
+      <div className="image-expand-modal">
+        <button
+          className="image-expand-modal__close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <img
+          src={imageUrl}
+          alt="Expanded view"
+          className="image-expand-modal__image"
+        />
+      </div>
+    </div>
+  );
+};
+
 interface SavedImagesPanelProps {
   referenceLibrary: ReferenceSet[];
   isLoading?: boolean;
@@ -22,6 +79,7 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
   const [newSetImages, setNewSetImages] = useState<ReferenceImage[]>([]);
   const [newSetLabel, setNewSetLabel] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sortedSets = useMemo(() => {
@@ -227,14 +285,41 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
                   </div>
                   <div className="library-set-images">
                     {set.images.map((img) => (
-                      <button
+                      <div
                         key={img.id}
-                        className="library-set-image-thumb"
-                        onClick={() => onSelectReferenceSet([set])}
-                        title={set.label || "Reference set"}
+                        className="library-set-image-thumb-wrapper"
                       >
-                        <img src={img.url} alt={set.label || "Reference"} />
-                      </button>
+                        <button
+                          className="library-set-image-thumb"
+                          onClick={() => onSelectReferenceSet([set])}
+                          title={set.label || "Reference set"}
+                        >
+                          <img src={img.url} alt={set.label || "Reference"} />
+                        </button>
+                        <button
+                          className="library-set-image-expand"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedImage(img.url);
+                          }}
+                          title="Expand image"
+                          aria-label="Expand image"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                          </svg>
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -275,6 +360,11 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
           </div>
         </>
       )}
+      <ImageExpandModal
+        isOpen={expandedImage !== null}
+        imageUrl={expandedImage || ""}
+        onClose={() => setExpandedImage(null)}
+      />
     </section>
   );
 };

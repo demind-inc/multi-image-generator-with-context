@@ -631,6 +631,10 @@ body {
   gap: 8px;
 }
 
+.library-set-image-thumb-wrapper {
+  position: relative;
+}
+
 .library-set-image-thumb {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
@@ -640,6 +644,7 @@ body {
   transition: transform 0.15s ease, border-color 0.2s ease;
   overflow: hidden;
   position: relative;
+  width: 100%;
 
   &:hover {
     transform: translateY(-1px);
@@ -657,6 +662,38 @@ body {
     border-color: rgba(249, 115, 22, 0.3);
     border-style: dashed;
   }
+}
+
+.library-set-image-expand {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  z-index: 1;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.library-set-image-thumb-wrapper:hover .library-set-image-expand {
+  opacity: 1;
 }
 
 .library-set-image-remove {
@@ -790,6 +827,71 @@ body {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.image-expand-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.image-expand-modal {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 17, 26, 0.95);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4);
+  padding: 24px;
+}
+
+.image-expand-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 1001;
+  font-size: 18px;
+  line-height: 1;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #f8fafc;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.image-expand-modal__image {
+  max-width: 100%;
+  max-height: calc(90vh - 48px);
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
 }
 
 .library-prompt-list {
