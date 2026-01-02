@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { PromptPreset } from "../../types";
 
 interface SavedPromptsPanelProps {
@@ -8,7 +8,7 @@ interface SavedPromptsPanelProps {
   sortDirection: "newest" | "oldest";
   onSortChange: (value: "newest" | "oldest") => void;
   onSelectPromptPreset: (preset: PromptPreset) => void;
-  onSavePrompt: () => void;
+  onSaveNewPrompt: (title: string, content: string) => Promise<void>;
 }
 
 const SavedPromptsPanel: React.FC<SavedPromptsPanelProps> = ({
@@ -18,8 +18,50 @@ const SavedPromptsPanel: React.FC<SavedPromptsPanelProps> = ({
   sortDirection,
   onSortChange,
   onSelectPromptPreset,
-  onSavePrompt,
+  onSaveNewPrompt,
 }) => {
+  const [isAddingNewPrompt, setIsAddingNewPrompt] = useState(false);
+  const [newPromptTitle, setNewPromptTitle] = useState("");
+  const [newPromptContent, setNewPromptContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveNewPrompt = async () => {
+    if (!newPromptTitle.trim()) {
+      alert("Please enter a title for the prompt.");
+      return;
+    }
+    if (!newPromptContent.trim()) {
+      alert("Please enter prompt content.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onSaveNewPrompt(newPromptTitle.trim(), newPromptContent.trim());
+      setIsAddingNewPrompt(false);
+      setNewPromptTitle("");
+      setNewPromptContent("");
+    } catch (error) {
+      console.error("Failed to save new prompt:", error);
+      alert("Could not save prompt. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelNewPrompt = () => {
+    setIsAddingNewPrompt(false);
+    setNewPromptTitle("");
+    setNewPromptContent("");
+  };
+
+  const handleUploadClick = () => {
+    if (!isAddingNewPrompt) {
+      setIsAddingNewPrompt(true);
+      setNewPromptTitle("");
+      setNewPromptContent("");
+    }
+  };
+
   return (
     <section className="card">
       <div className="card__header">
@@ -47,11 +89,53 @@ const SavedPromptsPanel: React.FC<SavedPromptsPanelProps> = ({
         <p className="sidebar__empty">Loading prompts...</p>
       ) : (
         <>
-          {sortedPrompts.length === 0 ? (
-            <p className="sidebar__empty">No saved prompts.</p>
-          ) : (
-            <div className="library-prompt-list custom-scrollbar">
-              {sortedPrompts.map((preset) => (
+          <div className="library-prompt-list custom-scrollbar">
+            {isAddingNewPrompt && (
+              <div className="library-prompt-item library-prompt-item--new">
+                <div className="library-prompt-header">
+                  <input
+                    type="text"
+                    className="library-prompt-title-input"
+                    placeholder="Prompt title (required)"
+                    value={newPromptTitle}
+                    onChange={(e) => setNewPromptTitle(e.target.value)}
+                    required
+                  />
+                  <div className="library-prompt-actions">
+                    <button
+                      onClick={handleSaveNewPrompt}
+                      disabled={
+                        isSaving ||
+                        !newPromptTitle.trim() ||
+                        !newPromptContent.trim()
+                      }
+                      className="library-prompt-action-btn library-prompt-action-btn--save"
+                    >
+                      {isSaving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={handleCancelNewPrompt}
+                      disabled={isSaving}
+                      className="library-prompt-action-btn library-prompt-action-btn--cancel"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  className="library-prompt-content-input"
+                  placeholder="Enter prompt content (required)"
+                  value={newPromptContent}
+                  onChange={(e) => setNewPromptContent(e.target.value)}
+                  rows={4}
+                  required
+                />
+              </div>
+            )}
+            {sortedPrompts.length === 0 && !isAddingNewPrompt ? (
+              <p className="sidebar__empty">No saved prompts.</p>
+            ) : (
+              sortedPrompts.map((preset) => (
                 <button
                   key={preset.id}
                   className="library-prompt-item"
@@ -67,13 +151,14 @@ const SavedPromptsPanel: React.FC<SavedPromptsPanelProps> = ({
                   </div>
                   <div className="library-prompt-content">{preset.content}</div>
                 </button>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
           <div className="library-sets-actions">
             <button
-              onClick={onSavePrompt}
+              onClick={handleUploadClick}
               className="primary-button primary-button--full"
+              disabled={isSaving}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -90,7 +175,7 @@ const SavedPromptsPanel: React.FC<SavedPromptsPanelProps> = ({
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Upload new prompt
+              {isAddingNewPrompt ? "Add more prompts" : "Upload new prompt"}
             </button>
           </div>
         </>

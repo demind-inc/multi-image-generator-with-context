@@ -996,7 +996,17 @@ const DashboardPage: React.FC = () => {
                 sortDirection={librarySort}
                 onSortChange={setLibrarySort}
                 onSelectPromptPreset={handleUsePromptPreset}
-                onSavePrompt={openPromptNameModal}
+                onSaveNewPrompt={async (title, content) => {
+                  const userId = session?.user?.id;
+                  if (!userId) {
+                    alert(
+                      "Unable to verify your account. Please sign in again."
+                    );
+                    return;
+                  }
+                  const saved = await savePromptPreset(userId, content, title);
+                  setPromptLibrary((prev) => [saved, ...prev]);
+                }}
               />
             )}
 

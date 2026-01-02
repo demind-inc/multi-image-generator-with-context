@@ -71,9 +71,13 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
       alert("Please upload at least one image.");
       return;
     }
+    if (!newSetLabel.trim()) {
+      alert("Please enter a name for the set.");
+      return;
+    }
     setIsSaving(true);
     try {
-      await onSaveNewSet(newSetImages, newSetLabel.trim() || undefined);
+      await onSaveNewSet(newSetImages, newSetLabel.trim());
       setIsAddingNewSet(false);
       setNewSetImages([]);
       setNewSetLabel("");
@@ -125,14 +129,19 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
                   <input
                     type="text"
                     className="library-set-title-input"
-                    placeholder="Set name"
+                    placeholder="Set name (required)"
                     value={newSetLabel}
                     onChange={(e) => setNewSetLabel(e.target.value)}
+                    required
                   />
                   <div className="library-set-actions">
                     <button
                       onClick={handleSaveNewSet}
-                      disabled={isSaving || newSetImages.length === 0}
+                      disabled={
+                        isSaving ||
+                        newSetImages.length === 0 ||
+                        !newSetLabel.trim()
+                      }
                       className="library-set-action-btn library-set-action-btn--save"
                     >
                       {isSaving ? "Saving..." : "Save"}

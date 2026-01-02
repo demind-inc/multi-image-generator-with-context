@@ -850,6 +850,106 @@ body {
   -webkit-box-orient: vertical;
 }
 
+.library-prompt-item--new {
+  border-color: rgba(249, 115, 22, 0.3);
+  background: rgba(249, 115, 22, 0.05);
+  cursor: default;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+
+  &:hover {
+    transform: none;
+    border-color: rgba(249, 115, 22, 0.3);
+  }
+}
+
+.library-prompt-title-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 800;
+  flex: 1;
+  max-width: 300px;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(249, 115, 22, 0.5);
+  }
+}
+
+.library-prompt-content-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(249, 115, 22, 0.5);
+  }
+}
+
+.library-prompt-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.library-prompt-action-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--save {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: rgba(249, 115, 22, 0.3);
+    color: #f97316;
+
+    &:hover:not(:disabled) {
+      background: rgba(249, 115, 22, 0.3);
+      border-color: rgba(249, 115, 22, 0.5);
+    }
+  }
+
+  &--cancel {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
 .results-placeholder {
   display: grid;
   gap: 10px;
