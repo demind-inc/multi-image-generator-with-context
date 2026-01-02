@@ -24,6 +24,7 @@ import {
 import {
   getSubscription,
   activateSubscription,
+  deactivateSubscription,
 } from "../services/subscriptionService";
 import {
   getHasGeneratedFreeImage,
@@ -49,6 +50,11 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   const FREE_CREDIT_CAP = 3;
+  const PLAN_PRICE_LABEL: Record<SubscriptionPlan, string> = {
+    basic: "$9/mo",
+    pro: "$29/mo",
+    business: "$79/mo",
+  };
 
   const [mode, setMode] = useState<AppMode>("slideshow");
   const [topic, setTopic] = useState<string>("");
@@ -272,14 +278,41 @@ const DashboardPage: React.FC = () => {
   const results = mode === "slideshow" ? slideshowResults : manualResults;
   const generatedCount = results.filter((item) => item.imageUrl).length;
   const totalScenes = results.length;
+  const hasSubscription = isPaymentUnlocked;
+  const usedCredits = usage?.used ?? 0;
+  const freeCreditsRemaining = Math.max(FREE_CREDIT_CAP - usedCredits, 0);
   const disableGenerate =
     isGenerating ||
     references.length === 0 ||
     (!!usage && usage.remaining <= 0) ||
     !!usageError;
   const planCreditLimit = PLAN_CREDITS[planType] ?? DEFAULT_MONTHLY_CREDITS;
-  const displayUsageLimit = usage?.monthlyLimit ?? planCreditLimit;
-  const displayUsageRemaining = usage?.remaining ?? planCreditLimit;
+  const displayUsageLimit = hasSubscription
+    ? usage?.monthlyLimit ?? planCreditLimit
+    : undefined;
+  const displayUsageRemaining = hasSubscription
+    ? usage?.remaining ?? planCreditLimit
+    : undefined;
+  const dashboardPlans = [
+    {
+      badge: "Basic",
+      price: "$9/mo",
+      credits: "60 credits/month",
+      plan: "basic" as SubscriptionPlan,
+    },
+    {
+      badge: "Pro",
+      price: "$29/mo",
+      credits: "180 credits/month",
+      plan: "pro" as SubscriptionPlan,
+    },
+    {
+      badge: "Business",
+      price: "$79/mo",
+      credits: "600 credits/month",
+      plan: "business" as SubscriptionPlan,
+    },
+  ];
 
   const triggerUpload = () => fileInputRef.current?.click();
 
@@ -421,23 +454,6 @@ const DashboardPage: React.FC = () => {
         // Still update local state even if DB update fails
         setHasGeneratedFreeImage(true);
       }
-    }
-  };
-
-  const unlockPayments = async () => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      alert("Unable to verify your account. Please sign in again.");
-      return;
-    }
-
-    try {
-      await activateSubscription(userId, planType);
-      setIsPaymentUnlocked(true);
-      setIsPaymentModalOpen(false);
-    } catch (error) {
-      console.error("Failed to activate subscription:", error);
-      alert("Failed to activate subscription. Please try again.");
     }
   };
 
@@ -785,6 +801,27 @@ const DashboardPage: React.FC = () => {
         usageRemaining={displayUsageRemaining}
         usageLimit={displayUsageLimit}
         isUsageLoading={isUsageLoading}
+        isSubscribed={hasSubscription}
+        freeCreditsRemaining={freeCreditsRemaining}
+        subscriptionLabel={
+          hasSubscription ? `Plan: ${planType.toUpperCase()}` : "Free"
+        }
+        subscriptionPrice={hasSubscription ? PLAN_PRICE_LABEL[planType] : null}
+        onOpenBilling={() => setIsPaymentModalOpen(true)}
+        onCancelSubscription={async () => {
+          const userId = session?.user?.id;
+          if (!userId) return;
+          try {
+            await deactivateSubscription(userId);
+            setIsPaymentUnlocked(false);
+            setPlanLockedFromSubscription(false);
+            setPlanType("basic");
+            await refreshUsage(userId);
+          } catch (error) {
+            console.error("Failed to cancel subscription:", error);
+            alert("Could not cancel subscription. Please try again.");
+          }
+        }}
       />
 
       <main className="app__body">
@@ -800,6 +837,8 @@ const DashboardPage: React.FC = () => {
           usageRemaining={displayUsageRemaining}
           usageLimit={displayUsageLimit}
           isUsageLoading={isUsageLoading}
+          isSubscribed={hasSubscription}
+          freeCreditsRemaining={freeCreditsRemaining}
         />
 
         <div className="app__content">
@@ -831,6 +870,32 @@ const DashboardPage: React.FC = () => {
             onRegenerate={handleRegenerate}
           />
         </div>
+
+        {!hasSubscription && (
+          <section className="dashboard-pricing">
+            <h3>Upgrade for more credits</h3>
+            <div className="dashboard-pricing__grid">
+              {dashboardPlans.map((planCard) => (
+                <div className="dashboard-pricing__card" key={planCard.plan}>
+                  <p className="dashboard-pricing__badge">{planCard.badge}</p>
+                  <p className="dashboard-pricing__price">{planCard.price}</p>
+                  <p className="dashboard-pricing__credits">
+                    {planCard.credits}
+                  </p>
+                  <button
+                    className="primary-button"
+                    onClick={() => {
+                      setPlanType(planCard.plan);
+                      setIsPaymentModalOpen(true);
+                    }}
+                  >
+                    Choose {planCard.badge}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <ReferenceLibraryModal
@@ -852,7 +917,6 @@ const DashboardPage: React.FC = () => {
       <PaymentModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
-        onUnlock={unlockPayments}
         planType={planType}
         paymentUrls={stripePlanLinks}
       />

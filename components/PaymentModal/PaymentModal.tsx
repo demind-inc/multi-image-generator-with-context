@@ -5,7 +5,6 @@ import "./PaymentModal.scss";
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUnlock: () => void;
   planType: SubscriptionPlan;
   paymentUrls?: Partial<Record<SubscriptionPlan, string>>;
 }
@@ -13,7 +12,6 @@ interface PaymentModalProps {
 const PaymentModal: React.FC<PaymentModalProps> = ({
   isOpen,
   onClose,
-  onUnlock,
   planType,
   paymentUrls,
 }) => {
@@ -87,9 +85,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             your .env to enable the subscription button.
           </div>
         )}
-        <button className="payment-modal__ghost" onClick={onUnlock}>
-          I already subscribed
-        </button>
       </div>
     </div>
   );

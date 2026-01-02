@@ -76,6 +76,15 @@ const problems = [
 
 const pricingPlans = [
   {
+    badge: "Free",
+    title: "Try it out",
+    price: "$0",
+    credits: "3 credits",
+    note: "Sign up and test 3 images for free.",
+    perks: ["3 free images", "No card required", "Keep your references"],
+    cta: "Start free",
+  },
+  {
     badge: "Basic",
     title: "For trying the workflow",
     price: "$9/mo",
