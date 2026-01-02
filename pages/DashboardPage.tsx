@@ -129,7 +129,12 @@ const DashboardPage: React.FC = () => {
     business: "$79/mo",
   };
 
-  const [mode, setMode] = useState<AppMode>("slideshow");
+  const [activePanel, setActivePanel] = useState<PanelKey>("storyboard");
+  // Derive mode from activePanel
+  const mode: AppMode = useMemo(() => {
+    return activePanel === "storyboard" ? "slideshow" : "manual";
+  }, [activePanel]);
+
   const [topic, setTopic] = useState<string>("");
   const [manualPrompts, setManualPrompts] = useState<string>(
     "Boy looking confused with question marks around him\nBoy feeling lonely at a cafe table\nBoy looking angry while listening to something"
@@ -162,7 +167,6 @@ const DashboardPage: React.FC = () => {
   >(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<PanelKey>("storyboard");
   const [nameModal, setNameModal] = useState<{
     type: "reference" | "prompt" | null;
     defaultValue: string;
@@ -339,23 +343,6 @@ const DashboardPage: React.FC = () => {
   }, [isPaymentUnlocked, session?.user?.id, planType]);
 
   // All hooks must be called before any conditional returns
-  const sortedReferenceImages = useMemo(() => {
-    const flat =
-      referenceLibrary?.flatMap((set) =>
-        set.images.map((img) => ({
-          ...img,
-          setLabel: set.label,
-          setId: set.setId,
-          createdAt: img.createdAt || set.createdAt,
-        }))
-      ) || [];
-    return [...flat].sort((a, b) => {
-      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return librarySort === "newest" ? bTime - aTime : aTime - bTime;
-    });
-  }, [referenceLibrary, librarySort]);
-
   const sortedPrompts = useMemo(() => {
     return [...promptLibrary].sort((a, b) => {
       const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -892,9 +879,13 @@ const DashboardPage: React.FC = () => {
         <div className="app__content">
           <Sidebar
             mode={mode}
-            onModeChange={setMode}
+            onModeChange={(newMode) => {
+              setActivePanel(newMode === "slideshow" ? "storyboard" : "manual");
+            }}
             activePanel={activePanel}
-            onPanelChange={setActivePanel}
+            onPanelChange={(panel) => {
+              setActivePanel(panel);
+            }}
             onOpenSettings={() => setIsPaymentModalOpen(true)}
             displayEmail={displayEmail}
             isSubscribed={hasSubscription}
@@ -980,10 +971,20 @@ const DashboardPage: React.FC = () => {
               <SavedImagesPanel
                 referenceLibrary={referenceLibrary}
                 isLoading={isLibraryLoading}
-                sortedImages={sortedReferenceImages}
                 sortDirection={librarySort}
                 onSortChange={setLibrarySort}
                 onSelectReferenceSet={handleAddReferencesFromLibrary}
+                onSaveNewSet={async (images, label) => {
+                  const userId = session?.user?.id;
+                  if (!userId) {
+                    alert(
+                      "Unable to verify your account. Please sign in again."
+                    );
+                    return;
+                  }
+                  await saveReferenceImages(userId, images, label);
+                  await refreshReferenceLibrary(userId);
+                }}
               />
             )}
 
@@ -995,12 +996,11 @@ const DashboardPage: React.FC = () => {
                 sortDirection={librarySort}
                 onSortChange={setLibrarySort}
                 onSelectPromptPreset={handleUsePromptPreset}
+                onSavePrompt={openPromptNameModal}
               />
             )}
 
-            {(activePanel === "references" ||
-              mode === "manual" ||
-              mode === "slideshow") && (
+            {(activePanel === "storyboard" || activePanel === "manual") && (
               <section className="card">
                 <div className="card__header">
                   <h3 className="card__title">1. References</h3>
@@ -1077,7 +1077,7 @@ const DashboardPage: React.FC = () => {
               </section>
             )}
 
-            {activePanel === "storyboard" && mode === "slideshow" && (
+            {activePanel === "storyboard" && (
               <section className="card">
                 <h3 className="card__title">2. Slideshow Story</h3>
                 <div className="sidebar__panel-content">
@@ -1110,7 +1110,7 @@ const DashboardPage: React.FC = () => {
               </section>
             )}
 
-            {activePanel === "manual" && mode === "manual" && (
+            {activePanel === "manual" && (
               <section className="card sidebar__panel">
                 <div className="card__header">
                   <h3 className="card__title">2. Manual Scenarios</h3>
@@ -1142,36 +1142,40 @@ const DashboardPage: React.FC = () => {
               </section>
             )}
 
-            {results.length > 0 || isGenerating ? (
-              <Results
-                mode={mode}
-                results={results}
-                isGenerating={isGenerating}
-                onRegenerate={handleRegenerate}
-              />
-            ) : (
-              <button
-                onClick={startGeneration}
-                disabled={disableGenerate}
-                className="primary-button primary-button--full"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+            {activePanel !== "saved" && activePanel !== "references" && (
+              <>
+                {results.length > 0 || isGenerating ? (
+                  <Results
+                    mode={mode}
+                    results={results}
+                    isGenerating={isGenerating}
+                    onRegenerate={handleRegenerate}
                   />
-                </svg>
-                Generate
-              </button>
+                ) : (
+                  <button
+                    onClick={startGeneration}
+                    disabled={disableGenerate}
+                    className="primary-button primary-button--full"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
+                    </svg>
+                    Generate
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
