@@ -25,9 +25,52 @@ const generatedImages = [
 ];
 
 const quickSteps = [
-  { title: "Upload one face", detail: "Use 1–3 clear shots. No setup." },
-  { title: "Pick contexts", detail: "Drop prompts: coffee, stage, notes." },
-  { title: "Get your set", detail: "We keep the style and features aligned." },
+  {
+    title: "Upload once",
+    detail: "1–3 clear reference shots to lock the look.",
+  },
+  {
+    title: "List scenes",
+    detail: "Coffee shop, stage, study desk—add the scenes, not the ref.",
+  },
+  {
+    title: "Generate a set",
+    detail: "We keep the same character and illustration across every scene.",
+  },
+];
+
+const valuePoints = [
+  {
+    title: "Scene-consistent sets",
+    detail: "Same character, outfit, and illustration style in every render.",
+  },
+  {
+    title: "No copy/paste loops",
+    detail: "Upload once—your reference follows each scene automatically.",
+  },
+  {
+    title: 'Better than "one upload"',
+    detail:
+      "The value is keeping scenes aligned, not just saving an extra click.",
+  },
+];
+
+const problems = [
+  {
+    title: "Style drifts without a reference",
+    detail:
+      "Faces, outfits, and illustration style change scene to scene when you prompt from scratch.",
+  },
+  {
+    title: "Re-upload, re-prompt, repeat",
+    detail:
+      "Copying prompts and uploading the same image for every scene wastes time.",
+  },
+  {
+    title: "Stories break when scenes don’t match",
+    detail:
+      "Slides, comics, or lesson plans look disjointed when characters keep changing.",
+  },
 ];
 
 const LandingPage: React.FC = () => {
@@ -111,7 +154,7 @@ const LandingPage: React.FC = () => {
           <div className="brand__text">
             <p className="brand__title">NanoGen AI</p>
             <div className="brand__subtitle">
-              <span className="brand__eyebrow">Context aware</span>
+              <span className="brand__eyebrow">Scene aware</span>
               <span className="brand__subtitle-text">
                 Multi-image generator
               </span>
@@ -121,8 +164,8 @@ const LandingPage: React.FC = () => {
 
         <nav className="landing__nav">
           <button onClick={() => scrollToSection("gallery")}>Examples</button>
+          <button onClick={() => scrollToSection("problem")}>Why scenes</button>
           <button onClick={() => scrollToSection("flow")}>Flow</button>
-          <button onClick={() => scrollToSection("try")}>Try it</button>
           <button onClick={() => scrollToSection("pricing")}>Pricing</button>
           <button onClick={() => scrollToSection("faq")}>FAQ</button>
         </nav>
@@ -147,15 +190,15 @@ const LandingPage: React.FC = () => {
       <main className="landing__main">
         <section className="landing__hero">
           <div className="landing__hero-copy">
-            <div className="landing__badge">Input ➝ four matching outputs</div>
-            <h1>Drop one photo. Leave with a whole set.</h1>
+            <div className="landing__badge">Scene-consistent illustration</div>
+            <h1>Same character. Same illustration. New scenes in one click.</h1>
             <p className="landing__lead">
-              Real results from one upload—warm, consistent, and ready for any
-              scene you describe.
+              Generate matching scenes without re-uploading references or
+              copy-pasting prompts. We carry your character across every scene.
             </p>
             <div className="landing__cta">
               <button className="primary-button" onClick={handleStart}>
-                Start with your photo
+                Start with your scene
               </button>
               <button
                 className="landing__ghost-button"
@@ -164,10 +207,29 @@ const LandingPage: React.FC = () => {
                 View examples
               </button>
             </div>
-            <div className="landing__meta">
-              <span className="pill">1 free image after login</span>
-              <span className="pill pill--ghost">Context-aware prompts</span>
-              <span className="pill pill--ghost">No watermarks</span>
+            <div className="landing__proof">
+              {valuePoints.map((point) => (
+                <div className="proof-item" key={point.title}>
+                  <div className="proof-item__icon" aria-hidden="true">
+                    <span />
+                  </div>
+                  <div className="proof-item__copy">
+                    <p className="proof-item__title">{point.title}</p>
+                    <p className="proof-item__detail">{point.detail}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="proof-item proof-item--note">
+                <div className="proof-item__icon" aria-hidden="true">
+                  <span />
+                </div>
+                <div className="proof-item__copy">
+                  <p className="proof-item__title">1 free render after login</p>
+                  <p className="proof-item__detail">
+                    Test a scene set before upgrading.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -208,10 +270,10 @@ const LandingPage: React.FC = () => {
               </div>
 
               <div className="landing__form-row">
-                <div className="landing__label">Prompt</div>
+                <div className="landing__label">Scene prompt</div>
                 <div className="landing__prompt landing__prompt--textarea">
-                  Listening closely in a busy café with warm light and soft blur
-                  behind me.
+                  Same boy, same illustration. Listening closely in a busy café
+                  with warm light and soft blur behind him.
                 </div>
               </div>
 
@@ -228,7 +290,11 @@ const LandingPage: React.FC = () => {
         >
           <div className="landing__section-head">
             <p className="landing__eyebrow">Real outputs</p>
-            <h2>One upload, multiple moods</h2>
+            <h2>Same character, multiple scenes</h2>
+            <p className="landing__section-subhead">
+              Built from a single reference—each scene holds the same face,
+              outfit, and illustration style.
+            </p>
           </div>
           <div className="landing__mosaic">
             <div className="mosaic__reference">
@@ -241,7 +307,7 @@ const LandingPage: React.FC = () => {
                 />
               </div>
               <p className="landing__hint">
-                We reuse this face in every scene.
+                We keep this character locked while scenes change.
               </p>
             </div>
             {generatedImages.map((image) => (
@@ -255,10 +321,39 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
+        <div className="landing__section-divider" aria-hidden="true" />
+
+        <section
+          id="problem"
+          className="landing__section landing__section--problem"
+        >
+          <div className="landing__section-head">
+            <p className="landing__eyebrow">The usual pain</p>
+            <h2>Scene consistency is hard to keep</h2>
+            <p className="landing__section-subhead">
+              Here is what happens when you generate scene-by-scene without a
+              persistent reference.
+            </p>
+          </div>
+          <div className="landing__problem-grid">
+            {problems.map((problem) => (
+              <div className="problem-card" key={problem.title}>
+                <div className="problem-card__icon" aria-hidden="true">
+                  <span />
+                </div>
+                <div className="problem-card__body">
+                  <p className="problem-card__title">{problem.title}</p>
+                  <p className="problem-card__detail">{problem.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section id="flow" className="landing__section landing__section--flow">
           <div className="landing__section-head">
             <p className="landing__eyebrow">How it works</p>
-            <h2>Three quick steps</h2>
+            <h2>Three steps to a scene set</h2>
           </div>
           <div className="landing__flow-grid">
             {quickSteps.map((step, index) => (
@@ -347,7 +442,7 @@ const LandingPage: React.FC = () => {
             <div className="faq__item">
               <div className="faq__question">Can I edit the prompt?</div>
               <div className="faq__answer">
-                Yes—start from the suggested prompt or type your own context.
+                Yes—start from the suggested prompt or type your own scene.
               </div>
             </div>
           </div>
