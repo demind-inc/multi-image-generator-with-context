@@ -111,3 +111,79 @@
   margin-bottom: 10px;
   font-size: 13px;
 }
+
+.payment-modal__plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.payment-modal__plan-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &.is-selected {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(99, 102, 241, 0.1);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  }
+}
+
+.payment-modal__plan-badge {
+  margin: 0;
+  color: #f8fafc;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.payment-modal__plan-price {
+  margin: 0;
+  color: #e2e8f0;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.payment-modal__plan-credits {
+  margin: 0 0 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.payment-modal__plan-button {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+  display: inline-flex;
+  margin-top: auto;
+}
+
+.payment-modal__plan-error {
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.12);
+  color: #fecdd3;
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  font-size: 11px;
+  text-align: center;
+  margin-top: auto;
+}
