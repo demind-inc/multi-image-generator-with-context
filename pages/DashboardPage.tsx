@@ -36,6 +36,8 @@ import {
   fetchReferenceLibrary,
   savePromptPreset,
   saveReferenceImages,
+  updatePromptPreset,
+  updateReferenceSetLabel,
 } from "../services/libraryService";
 import PaymentModal from "../components/PaymentModal/PaymentModal";
 import Sidebar, { PanelKey } from "../components/Sidebar/Sidebar";
@@ -497,6 +499,80 @@ const DashboardPage: React.FC = () => {
       alert("Could not save prompt preset. Please try again.");
     } finally {
       setIsSavingPrompt(false);
+    }
+  };
+
+  const handleUpdatePromptPreset = async (
+    presetId: string,
+    title: string,
+    content: string
+  ) => {
+    const userId = session?.user?.id;
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+
+    if (!userId) {
+      alert("Unable to verify your account. Please sign in again.");
+      return;
+    }
+
+    if (!trimmedTitle || !trimmedContent) {
+      alert("Please provide both a title and prompt content.");
+      return;
+    }
+
+    try {
+      const updated = await updatePromptPreset(
+        userId,
+        presetId,
+        trimmedTitle,
+        trimmedContent
+      );
+      setPromptLibrary((prev) =>
+        prev.map((prompt) => (prompt.id === presetId ? updated : prompt))
+      );
+    } catch (error) {
+      console.error("Failed to update prompt preset:", error);
+      alert("Could not update prompt preset. Please try again.");
+    }
+  };
+
+  const handleUpdateReferenceSetLabel = async (
+    setId: string,
+    label: string
+  ) => {
+    const userId = session?.user?.id;
+    const trimmedLabel = label.trim();
+
+    if (!userId) {
+      alert("Unable to verify your account. Please sign in again.");
+      return;
+    }
+
+    if (!trimmedLabel) {
+      alert("Please provide a name for this reference set.");
+      return;
+    }
+
+    try {
+      await updateReferenceSetLabel(userId, setId, trimmedLabel);
+      setReferenceLibrary((prev) =>
+        prev.map((set) =>
+          set.setId === setId
+            ? {
+                ...set,
+                label: trimmedLabel,
+                images: set.images.map((img) => ({
+                  ...img,
+                  label: trimmedLabel,
+                })),
+              }
+            : set
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update reference set label:", error);
+      alert("Could not update reference set. Please try again.");
     }
   };
 
@@ -985,6 +1061,7 @@ const DashboardPage: React.FC = () => {
                   await saveReferenceImages(userId, images, label);
                   await refreshReferenceLibrary(userId);
                 }}
+                onUpdateReferenceSet={handleUpdateReferenceSetLabel}
               />
             )}
 
@@ -1007,6 +1084,7 @@ const DashboardPage: React.FC = () => {
                   const saved = await savePromptPreset(userId, content, title);
                   setPromptLibrary((prev) => [saved, ...prev]);
                 }}
+                onUpdatePromptPreset={handleUpdatePromptPreset}
               />
             )}
 

@@ -65,6 +65,7 @@ interface SavedImagesPanelProps {
   onSortChange: (value: "newest" | "oldest") => void;
   onSelectReferenceSet: (sets: ReferenceSet[]) => void;
   onSaveNewSet: (images: ReferenceImage[], label?: string) => Promise<void>;
+  onUpdateReferenceSet: (setId: string, label: string) => Promise<void>;
 }
 
 const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
@@ -74,12 +75,16 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
   onSortChange,
   onSelectReferenceSet,
   onSaveNewSet,
+  onUpdateReferenceSet,
 }) => {
   const [isAddingNewSet, setIsAddingNewSet] = useState(false);
   const [newSetImages, setNewSetImages] = useState<ReferenceImage[]>([]);
   const [newSetLabel, setNewSetLabel] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [editingSetId, setEditingSetId] = useState<string | null>(null);
+  const [editingSetLabel, setEditingSetLabel] = useState("");
+  const [isUpdatingSet, setIsUpdatingSet] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sortedSets = useMemo(() => {
@@ -151,6 +156,35 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
     setIsAddingNewSet(false);
     setNewSetImages([]);
     setNewSetLabel("");
+  };
+
+  const startEditingSet = (set: ReferenceSet) => {
+    setEditingSetId(set.setId);
+    setEditingSetLabel(set.label || "");
+  };
+
+  const handleSaveEditedSet = async () => {
+    if (!editingSetId) return;
+    if (!editingSetLabel.trim()) {
+      alert("Please enter a name for the set.");
+      return;
+    }
+    setIsUpdatingSet(true);
+    try {
+      await onUpdateReferenceSet(editingSetId, editingSetLabel.trim());
+      setEditingSetId(null);
+      setEditingSetLabel("");
+    } catch (error) {
+      console.error("Failed to update reference set:", error);
+      alert("Could not update this set. Please try again.");
+    } finally {
+      setIsUpdatingSet(false);
+    }
+  };
+
+  const handleCancelEditSet = () => {
+    setEditingSetId(null);
+    setEditingSetLabel("");
   };
 
   return (
@@ -268,62 +302,110 @@ const SavedImagesPanel: React.FC<SavedImagesPanelProps> = ({
             {sortedSets.length === 0 && !isAddingNewSet ? (
               <p className="sidebar__empty">No saved reference images.</p>
             ) : (
-              sortedSets.map((set) => (
-                <div key={set.setId} className="library-set-item">
-                  <div className="library-set-header">
-                    <h4 className="library-set-title">
-                      {set.label ||
-                        `Reference set (${new Date(
-                          set.createdAt || Date.now()
-                        ).toLocaleDateString()})`}
-                    </h4>
-                    {set.createdAt && (
-                      <span className="library-set-date">
-                        {new Date(set.createdAt).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="library-set-images">
-                    {set.images.map((img) => (
-                      <div
-                        key={img.id}
-                        className="library-set-image-thumb-wrapper"
-                      >
-                        <button
-                          className="library-set-image-thumb"
-                          onClick={() => onSelectReferenceSet([set])}
-                          title={set.label || "Reference set"}
+              sortedSets.map((set) => {
+                const isEditing = editingSetId === set.setId;
+                return (
+                  <div key={set.setId} className="library-set-item">
+                    <div className="library-set-header">
+                      {isEditing ? (
+                        <>
+                          <input
+                            type="text"
+                            className="library-set-title-input"
+                            placeholder="Set name"
+                            value={editingSetLabel}
+                            onChange={(e) => setEditingSetLabel(e.target.value)}
+                            disabled={isUpdatingSet}
+                          />
+                          <div className="library-set-actions">
+                            <button
+                              onClick={handleSaveEditedSet}
+                              disabled={isUpdatingSet || !editingSetLabel.trim()}
+                              className="library-set-action-btn library-set-action-btn--save"
+                            >
+                              {isUpdatingSet ? "Saving..." : "Save"}
+                            </button>
+                            <button
+                              onClick={handleCancelEditSet}
+                              disabled={isUpdatingSet}
+                              className="library-set-action-btn library-set-action-btn--cancel"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <h4 className="library-set-title">
+                            {set.label ||
+                              `Reference set (${new Date(
+                                set.createdAt || Date.now()
+                              ).toLocaleDateString()})`}
+                          </h4>
+                          <div className="library-set-actions">
+                            {set.createdAt && (
+                              <span className="library-set-date">
+                                {new Date(set.createdAt).toLocaleDateString()}
+                              </span>
+                            )}
+                            <button
+                              onClick={() => startEditingSet(set)}
+                              className="library-set-action-btn"
+                              disabled={
+                                isSaving || isUpdatingSet || isAddingNewSet
+                              }
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="library-set-images">
+                      {set.images.map((img) => (
+                        <div
+                          key={img.id}
+                          className="library-set-image-thumb-wrapper"
                         >
-                          <img src={img.url} alt={set.label || "Reference"} />
-                        </button>
-                        <button
-                          className="library-set-image-expand"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedImage(img.url);
-                          }}
-                          title="Expand image"
-                          aria-label="Expand image"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                          <button
+                            className="library-set-image-thumb"
+                            onClick={() => {
+                              if (isEditing) return;
+                              onSelectReferenceSet([set]);
+                            }}
+                            title={set.label || "Reference set"}
                           >
-                            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                            <img src={img.url} alt={set.label || "Reference"} />
+                          </button>
+                          <button
+                            className="library-set-image-expand"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedImage(img.url);
+                            }}
+                            title="Expand image"
+                            aria-label="Expand image"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
           <div className="library-sets-actions">
