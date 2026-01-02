@@ -821,73 +821,6 @@ const DashboardPage: React.FC = () => {
               onChange={handleFileUpload}
             />
             <section className="card dashboard-summary">
-              <div className="dashboard-summary__top">
-                <div className="brand brand--compact">
-                  <div className="brand__icon">
-                    <img
-                      src="/assets/images/logo.png"
-                      alt="NanoGen AI Logo"
-                      className="brand__icon-image"
-                    />
-                  </div>
-                  <div className="brand__text">
-                    <p className="brand__eyebrow">Dashboard</p>
-                    <h3 className="brand__title">NanoGen AI</h3>
-                  </div>
-                </div>
-                <div className="dashboard-summary__plan">
-                  <p className="dashboard-summary__label">Plan</p>
-                  <p className="dashboard-summary__plan-title">
-                    {hasSubscription
-                      ? `Plan: ${planType.toUpperCase()}`
-                      : "Free tier"}
-                  </p>
-                  <p className="dashboard-summary__plan-meta">
-                    {hasSubscription
-                      ? PLAN_PRICE_LABEL[planType]
-                      : "3 free credits included"}
-                  </p>
-                  <div className="dashboard-summary__actions">
-                    {hasSubscription ? (
-                      <button
-                        className="chip-button chip-button--ghost"
-                        onClick={async () => {
-                          const userId = session?.user?.id;
-                          if (!userId) return;
-                          try {
-                            await cancelStripeSubscription(
-                              stripeSubscriptionId
-                            );
-                            await deactivateSubscription(userId);
-                            setIsPaymentUnlocked(false);
-                            setPlanLockedFromSubscription(false);
-                            setPlanType("basic");
-                            await refreshUsage(userId);
-                          } catch (error) {
-                            console.error(
-                              "Failed to cancel subscription:",
-                              error
-                            );
-                            alert(
-                              "Could not cancel subscription. Please try again."
-                            );
-                          }
-                        }}
-                      >
-                        Cancel plan
-                      </button>
-                    ) : (
-                      <button
-                        className="chip-button"
-                        onClick={() => setIsPaymentModalOpen(true)}
-                      >
-                        Upgrade
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               <div className="dashboard-summary__metrics">
                 <div className="metric-card">
                   <p className="metric-card__value">
@@ -922,37 +855,6 @@ const DashboardPage: React.FC = () => {
                 <div className="metric-card">
                   <p className="metric-card__value">{size}</p>
                   <p className="metric-card__label">Resolution</p>
-                </div>
-              </div>
-
-              <div className="dashboard-summary__actions-row">
-                <div className="size-picker">
-                  <span>Resolution</span>
-                  <div className="size-picker__options">
-                    <button
-                      className={`size-picker__option ${
-                        size === "1K" ? "is-active" : ""
-                      }`}
-                      onClick={() => setSize("1K")}
-                    >
-                      1K
-                    </button>
-                  </div>
-                </div>
-                <div className="dashboard-summary__cta">
-                  <button
-                    onClick={triggerUpload}
-                    className="primary-button primary-button--ghost"
-                  >
-                    Upload references
-                  </button>
-                  <button
-                    onClick={startGeneration}
-                    disabled={disableGenerate}
-                    className="primary-button"
-                  >
-                    {isGenerating ? "Processing..." : "Generate now"}
-                  </button>
                 </div>
               </div>
             </section>
