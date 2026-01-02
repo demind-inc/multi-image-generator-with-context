@@ -45,10 +45,13 @@ const Results: React.FC<ResultsProps> = ({
                   />
                 </svg>
               </div>
-              <p className="brand__title" style={{ fontSize: "18px", color: "#475569" }}>
+              <p
+                className="brand__title"
+                style={{ fontSize: "18px", color: "#475569" }}
+              >
                 No Content Ready
               </p>
-              <p className="helper-text" style={{ margin: 0 }}>
+              <p className="text text--helper" style={{ margin: 0 }}>
                 Upload references and{" "}
                 {mode === "slideshow" ? "create a storyboard" : "input prompts"}
               </p>
@@ -61,14 +64,19 @@ const Results: React.FC<ResultsProps> = ({
                   return (
                     <div
                       key={idx}
-                      className={`slide-card ${result.isCTA ? "slide-card--cta" : ""}`}
+                      className={`slide-card ${
+                        result.isCTA ? "slide-card--cta" : ""
+                      }`}
                     >
                       {!result.isCTA && (
                         <div className="slide-card__media">
                           {result.isLoading ? (
                             <div className="slide-card__overlay slide-card__overlay--loading">
                               <div className="spinner" />
-                              <p className="helper-text" style={{ margin: 0, color: "#2563eb" }}>
+                              <p
+                                className="text text--helper"
+                                style={{ margin: 0, color: "#2563eb" }}
+                              >
                                 Illustrating...
                               </p>
                             </div>
@@ -127,21 +135,28 @@ const Results: React.FC<ResultsProps> = ({
                             </>
                           ) : result.error ? (
                             <div className="slide-card__overlay slide-card__overlay--error">
-                              <p className="helper-text" style={{ margin: 0, color: "#b91c1c" }}>
+                              <p
+                                className="text text--helper"
+                                style={{ margin: 0, color: "#b91c1c" }}
+                              >
                                 Error
                               </p>
                               <p
                                 className="slide-card__prompt"
-                                style={{ color: "#ef4444", fontStyle: "italic" }}
+                                style={{
+                                  color: "#ef4444",
+                                  fontStyle: "italic",
+                                }}
                               >
                                 "{result.error}"
                               </p>
                               <button
                                 onClick={() => onRegenerate(idx)}
-                                className="storyboard-button"
+                                className="button button--storyboard"
                                 style={{
                                   background: "#ef4444",
-                                  boxShadow: "0 12px 22px rgba(239, 68, 68, 0.26)",
+                                  boxShadow:
+                                    "0 12px 22px rgba(239, 68, 68, 0.26)",
                                 }}
                               >
                                 Retry
@@ -164,7 +179,10 @@ const Results: React.FC<ResultsProps> = ({
                                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                                 />
                               </svg>
-                              <div className="helper-text" style={{ margin: 0, color: "#cbd5e1" }}>
+                              <div
+                                className="text text--helper"
+                                style={{ margin: 0, color: "#cbd5e1" }}
+                              >
                                 Awaiting Generation
                               </div>
                             </div>
@@ -201,20 +219,32 @@ const Results: React.FC<ResultsProps> = ({
                         <span className="slide-card__index">{idx + 1}</span>
                         <h3 className="slide-card__title">
                           {result.title ||
-                            (mode === "manual" ? `Scene ${idx + 1}` : `Slide ${idx + 1}`)}
+                            (mode === "manual"
+                              ? `Scene ${idx + 1}`
+                              : `Slide ${idx + 1}`)}
                         </h3>
                       </div>
 
                       {!isFirstSlide && result.description && (
-                        <p className="slide-card__description">{result.description}</p>
+                        <p className="slide-card__description">
+                          {result.description}
+                        </p>
                       )}
 
-                      {mode === "manual" && <p className="slide-card__description">{result.prompt}</p>}
+                      {mode === "manual" && (
+                        <p className="slide-card__description">
+                          {result.prompt}
+                        </p>
+                      )}
 
                       {!result.isCTA && (
                         <div className="slide-card__foot">
-                          <div className="slide-card__foot-label">Character Guidance</div>
-                          <p className="slide-card__foot-text">"{result.prompt}"</p>
+                          <div className="slide-card__foot-label">
+                            Character Guidance
+                          </div>
+                          <p className="slide-card__foot-text">
+                            "{result.prompt}"
+                          </p>
                         </div>
                       )}
                     </div>

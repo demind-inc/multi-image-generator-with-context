@@ -93,9 +93,9 @@ const NameCaptureModal: React.FC<NameCaptureModalProps> = ({
           </button>
         </div>
         <div className="dataset-modal__body">
-          <label className="field-label">Name</label>
+          <label className="label">Name</label>
           <input
-            className="text-input"
+            className="input"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Enter a name"
@@ -1092,26 +1092,26 @@ const DashboardPage: React.FC = () => {
                 <h3 className="card__title">2. Slideshow Story</h3>
                 <div className="sidebar__panel-content">
                   <div>
-                    <label className="field-label">Overall Topic</label>
+                    <label className="label">Overall Topic</label>
                     <input
                       type="text"
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
                       placeholder="e.g. Benefits of Yoga"
-                      className="text-input"
+                      className="input"
                     />
                   </div>
                   <button
                     onClick={handleGenerateStoryboard}
                     disabled={isCreatingStoryboard || !topic.trim()}
-                    className="storyboard-button"
+                    className="button button--storyboard"
                   >
                     {isCreatingStoryboard
                       ? "Creating Script..."
                       : "Generate Storyboard"}
                   </button>
                   <div className="sidebar__helper">
-                    <p className="helper-text">
+                    <p className="text text--helper">
                       This will automatically create a title slide, informative
                       slides, and a CTA slide.
                     </p>
@@ -1144,9 +1144,9 @@ const DashboardPage: React.FC = () => {
                   value={manualPrompts}
                   onChange={(e) => setManualPrompts(e.target.value)}
                   placeholder="One scene prompt per line..."
-                  className="textarea-input"
+                  className="input input--textarea"
                 />
-                <p className="helper-text">
+                <p className="text text--helper">
                   Describe actions, emotions, and props.
                 </p>
               </section>

@@ -68,7 +68,7 @@ const AuthShell: React.FC<AuthShellProps> = ({
           className="auth-form"
           onSubmit={isSignUpMode ? onSignUp : onSignIn}
         >
-          <label className="field-label" htmlFor="auth-email">
+          <label className="label" htmlFor="auth-email">
             Email
           </label>
           <input
@@ -77,12 +77,12 @@ const AuthShell: React.FC<AuthShellProps> = ({
             value={authEmail}
             onChange={(e) => onEmailChange(e.target.value)}
             placeholder="you@example.com"
-            className="text-input"
+            className="input"
             required
             autoComplete="email"
           />
           <label
-            className="field-label"
+            className="label"
             htmlFor="auth-password"
             style={{ marginTop: "16px" }}
           >
@@ -98,7 +98,7 @@ const AuthShell: React.FC<AuthShellProps> = ({
                 ? "Create a password (min. 6 characters)"
                 : "Enter your password"
             }
-            className="text-input"
+            className="input"
             required
             autoComplete={isSignUpMode ? "new-password" : "current-password"}
             minLength={6}
@@ -121,7 +121,7 @@ const AuthShell: React.FC<AuthShellProps> = ({
 
         <div style={{ marginTop: "16px", textAlign: "center" }}>
           {isSignUpMode ? (
-            <p className="helper-text">
+            <p className="text text--helper">
               Already have an account?{" "}
               <button
                 type="button"
@@ -140,7 +140,7 @@ const AuthShell: React.FC<AuthShellProps> = ({
               </button>
             </p>
           ) : (
-            <p className="helper-text">
+            <p className="text text--helper">
               Don't have an account?{" "}
               <button
                 type="button"
@@ -168,7 +168,7 @@ const AuthShell: React.FC<AuthShellProps> = ({
           <div className="auth-alert auth-alert--error">{authError}</div>
         )}
         {authStatus === "checking" && !authError && (
-          <p className="helper-text" style={{ marginTop: "12px" }}>
+          <p className="text text--helper" style={{ marginTop: "12px" }}>
             Checking your session...
           </p>
         )}

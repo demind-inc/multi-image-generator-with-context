@@ -86,7 +86,7 @@ const ReferenceLibraryModal: React.FC<ReferenceLibraryModalProps> = ({
         {isLoading ? (
           <div className="dataset-modal__empty">
             <div className="dataset-modal__spinner" />
-            <p className="helper-text" style={{ margin: 0 }}>
+            <p className="text text--helper" style={{ margin: 0 }}>
               Loading your references...
             </p>
           </div>
@@ -94,7 +94,7 @@ const ReferenceLibraryModal: React.FC<ReferenceLibraryModalProps> = ({
           <div className="dataset-modal__empty">
             <div className="dataset-modal__empty-icon">📁</div>
             <p>No saved references yet</p>
-            <p className="helper-text" style={{ margin: 0 }}>
+            <p className="text text--helper" style={{ margin: 0 }}>
               Save your current uploads to quickly reuse them later.
             </p>
           </div>
