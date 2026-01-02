@@ -76,6 +76,8 @@ const DashboardPage: React.FC = () => {
   const [isFreeImageLoading, setIsFreeImageLoading] = useState(false);
   const [isPaymentUnlocked, setIsPaymentUnlocked] = useState<boolean>(false);
   const [planType, setPlanType] = useState<SubscriptionPlan>("basic");
+  const [planLockedFromSubscription, setPlanLockedFromSubscription] =
+    useState(false);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -164,16 +166,21 @@ const DashboardPage: React.FC = () => {
       setIsPaymentUnlocked(subscription?.isActive ?? false);
       if (subscription?.planType) {
         setPlanType(subscription.planType);
+        setPlanLockedFromSubscription(true);
+      } else {
+        setPlanLockedFromSubscription(false);
       }
     } catch (error) {
       console.error("Failed to fetch subscription:", error);
       setIsPaymentUnlocked(false);
+      setPlanLockedFromSubscription(false);
     } finally {
       setIsSubscriptionLoading(false);
     }
   };
 
   useEffect(() => {
+    if (planLockedFromSubscription) return;
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const urlPlan = params.get("plan");
@@ -189,7 +196,7 @@ const DashboardPage: React.FC = () => {
     ) {
       setPlanType(storedPlan as SubscriptionPlan);
     }
-  }, [authStatus]);
+  }, [authStatus, planLockedFromSubscription]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

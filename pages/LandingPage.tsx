@@ -141,18 +141,6 @@ const LandingPage: React.FC = () => {
   useEffect(() => {
     if (authStatus === "signed_in") {
       setShowAuthModal(false);
-      if (typeof window !== "undefined") {
-        const pendingPayment = window.localStorage.getItem("start_payment_flow");
-        const preferredPlan = window.localStorage.getItem("preferred_plan");
-        if (pendingPayment) {
-          window.localStorage.removeItem("start_payment_flow");
-          navigate(
-            `/dashboard${
-              preferredPlan ? `?plan=${preferredPlan}&openPayment=1` : "?openPayment=1"
-            }`
-          );
-        }
-      }
     }
   }, [authStatus]);
 
@@ -462,7 +450,11 @@ const LandingPage: React.FC = () => {
                 </ul>
                 <button
                   className="primary-button"
-                  onClick={() => handlePlanStart(plan.badge.toLowerCase() as SubscriptionPlan)}
+                  onClick={() =>
+                    handlePlanStart(
+                      plan.badge.toLowerCase() as SubscriptionPlan
+                    )
+                  }
                 >
                   {plan.cta}
                 </button>
