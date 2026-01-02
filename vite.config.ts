@@ -26,6 +26,13 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.STRIPE_SUBSCRIPTION_LINK": JSON.stringify(
         env.STRIPE_SUBSCRIPTION_LINK
       ),
+      "import.meta.env.STRIPE_LINK_BASIC": JSON.stringify(
+        env.STRIPE_LINK_BASIC
+      ),
+      "import.meta.env.STRIPE_LINK_PRO": JSON.stringify(env.STRIPE_LINK_PRO),
+      "import.meta.env.STRIPE_LINK_BUSINESS": JSON.stringify(
+        env.STRIPE_LINK_BUSINESS
+      ),
     },
     resolve: {
       alias: {

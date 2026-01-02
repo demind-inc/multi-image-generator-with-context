@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../providers/AuthProvider";
+import { SubscriptionPlan } from "../types";
 import AuthShell from "../components/AuthShell/AuthShell";
 import "./LandingPage.scss";
 
@@ -73,6 +74,58 @@ const problems = [
   },
 ];
 
+const pricingPlans = [
+  {
+    badge: "Free",
+    title: "Try it out",
+    price: "$0",
+    credits: "3 credits",
+    note: "Sign up and test 3 images for free.",
+    perks: ["3 free images", "No card required", "Keep your references"],
+    cta: "Start free",
+  },
+  {
+    badge: "Basic",
+    title: "For trying the workflow",
+    price: "$9/mo",
+    credits: "60 credits / month",
+    note: "1 credit = 1 image. Credits reset monthly.",
+    perks: [
+      "60 images each month",
+      "Scene-consistent renders",
+      "Email support",
+    ],
+    cta: "Choose Basic",
+  },
+  {
+    badge: "Pro",
+    title: "For weekly storytellers",
+    price: "$29/mo",
+    credits: "180 credits / month",
+    note: "1 credit = 1 image. Credits reset monthly.",
+    perks: [
+      "180 images each month",
+      "Priority rendering",
+      "Reference libraries saved",
+    ],
+    cta: "Choose Pro",
+    highlight: true,
+  },
+  {
+    badge: "Business",
+    title: "For teams and volume",
+    price: "$79/mo",
+    credits: "600 credits / month",
+    note: "1 credit = 1 image. Credits reset monthly.",
+    perks: [
+      "600 images each month",
+      "Team-friendly storage",
+      "Fastest support response",
+    ],
+    cta: "Choose Business",
+  },
+];
+
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -103,6 +156,18 @@ const LandingPage: React.FC = () => {
   const handleStart = () => {
     if (authStatus === "signed_in") {
       navigate("/dashboard");
+      return;
+    }
+    setShowAuthModal(true);
+  };
+
+  const handlePlanStart = (plan: SubscriptionPlan) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("preferred_plan", plan);
+      window.localStorage.setItem("start_payment_flow", "1");
+    }
+    if (authStatus === "signed_in") {
+      navigate(`/dashboard?plan=${plan}&openPayment=1`);
       return;
     }
     setShowAuthModal(true);
@@ -372,41 +437,38 @@ const LandingPage: React.FC = () => {
         >
           <div className="landing__section-head">
             <p className="landing__eyebrow">Pricing</p>
-            <h2>Start free, unlock unlimited sets</h2>
+            <h2>Pick a plan, get monthly credits</h2>
           </div>
           <div className="pricing-grid">
-            <div className="pricing-card">
-              <div className="pricing-card__badge">Starter</div>
-              <h3>First image</h3>
-              <p className="pricing-card__price">$0</p>
-              <p className="pricing-card__note">
-                Sign in and generate one image on us.
-              </p>
-              <ul className="pricing-card__list">
-                <li>1 free render</li>
-                <li>No watermark</li>
-                <li>Keep your look for later</li>
-              </ul>
-              <button className="primary-button" onClick={handleStart}>
-                Claim free image
-              </button>
-            </div>
-            <div className="pricing-card pricing-card--highlight">
-              <div className="pricing-card__badge">Creator</div>
-              <h3>After the first</h3>
-              <p className="pricing-card__price">$20/mo</p>
-              <p className="pricing-card__note">
-                Unlimited generation after your free try.
-              </p>
-              <ul className="pricing-card__list">
-                <li>Unlimited outputs</li>
-                <li>Fast rendering queue</li>
-                <li>Consistent faces across prompts</li>
-              </ul>
-              <button className="primary-button" onClick={handleStart}>
-                Start generating
-              </button>
-            </div>
+            {pricingPlans.map((plan) => (
+              <div
+                className={`pricing-card ${
+                  plan.highlight ? "pricing-card--highlight" : ""
+                }`}
+                key={plan.badge}
+              >
+                <div className="pricing-card__badge">{plan.badge}</div>
+                <h3>{plan.title}</h3>
+                <p className="pricing-card__price">{plan.price}</p>
+                <p className="pricing-card__credits">{plan.credits}</p>
+                <p className="pricing-card__note">{plan.note}</p>
+                <ul className="pricing-card__list">
+                  {plan.perks.map((perk) => (
+                    <li key={perk}>{perk}</li>
+                  ))}
+                </ul>
+                <button
+                  className="primary-button"
+                  onClick={() =>
+                    handlePlanStart(
+                      plan.badge.toLowerCase() as SubscriptionPlan
+                    )
+                  }
+                >
+                  {plan.cta}
+                </button>
+              </div>
+            ))}
           </div>
         </section>
 

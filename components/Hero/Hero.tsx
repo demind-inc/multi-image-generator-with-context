@@ -14,6 +14,8 @@ interface HeroProps {
   usageRemaining?: number;
   usageLimit?: number;
   isUsageLoading?: boolean;
+  isSubscribed: boolean;
+  freeCreditsRemaining?: number;
 }
 
 const Hero: React.FC<HeroProps> = ({
@@ -28,6 +30,8 @@ const Hero: React.FC<HeroProps> = ({
   usageRemaining,
   usageLimit,
   isUsageLoading,
+  isSubscribed,
+  freeCreditsRemaining,
 }) => {
   return (
     <section className="hero card card--gradient">
@@ -71,11 +75,17 @@ const Hero: React.FC<HeroProps> = ({
             <p className="metric-card__value">
               {isUsageLoading
                 ? "..."
-                : usageLimit
-                ? `${usageRemaining ?? usageLimit}/${usageLimit}`
-                : "--/--"}
+                : isSubscribed
+                ? usageLimit
+                  ? `${usageRemaining ?? usageLimit}/${usageLimit}`
+                  : "--/--"
+                : typeof freeCreditsRemaining === "number"
+                ? `${freeCreditsRemaining}/3`
+                : "3"}
             </p>
-            <p className="metric-card__label">Daily limit</p>
+            <p className="metric-card__label">
+              {isSubscribed ? "Credits left" : "Free credits"}
+            </p>
           </div>
           <div className="metric-card">
             <p className="metric-card__value">{generatedCount}</p>

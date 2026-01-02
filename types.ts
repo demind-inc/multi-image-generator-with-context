@@ -1,6 +1,7 @@
 export type ImageSize = "1K";
 export type AppMode = "slideshow" | "manual";
 export type AuthStatus = "checking" | "signed_out" | "signed_in";
+export type SubscriptionPlan = "basic" | "pro" | "business";
 
 export interface SlideContent {
   title: string;
@@ -55,10 +56,10 @@ export interface AccountProfile {
   created_at?: string | null;
 }
 
-export interface DailyUsage {
+export interface MonthlyUsage {
   userId: string;
-  usageDate: string;
+  periodStart: string;
   used: number;
-  dailyLimit: number;
+  monthlyLimit: number;
   remaining: number;
 }

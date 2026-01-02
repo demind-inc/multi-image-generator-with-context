@@ -190,6 +190,44 @@
     word-break: break-all;
   }
 
+  &__subscription {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 8px;
+    color: #cbd5e1;
+  }
+
+  &__sub-label {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  &__sub-price {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+
+  &__sub-actions button {
+    width: 100%;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+
   &__signout {
     width: 100%;
     padding: 10px 12px;
