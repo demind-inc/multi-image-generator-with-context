@@ -1,3 +1,4 @@
+import { SubscriptionPlan } from "../types";
 import { getSupabaseClient } from "./supabaseClient";
 
 const SUBSCRIPTION_TABLE = "subscriptions";
@@ -10,6 +11,7 @@ export interface Subscription {
   currentPeriodEnd?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  planType?: SubscriptionPlan | null;
 }
 
 export async function getSubscription(
@@ -39,6 +41,7 @@ export async function getSubscription(
     currentPeriodEnd: data.current_period_end,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
+    planType: (data.plan_type as SubscriptionPlan | null) ?? null,
   };
 }
 
@@ -49,6 +52,7 @@ export async function createOrUpdateSubscription(
     stripeSubscriptionId?: string;
     stripeCustomerId?: string;
     currentPeriodEnd?: string;
+    planType?: SubscriptionPlan | null;
   }
 ): Promise<Subscription> {
   const supabase = getSupabaseClient();
@@ -62,6 +66,7 @@ export async function createOrUpdateSubscription(
         stripe_subscription_id: subscriptionData.stripeSubscriptionId || null,
         stripe_customer_id: subscriptionData.stripeCustomerId || null,
         current_period_end: subscriptionData.currentPeriodEnd || null,
+        plan_type: subscriptionData.planType || null,
         updated_at: new Date().toISOString(),
       } as any,
       {
@@ -93,14 +98,17 @@ export async function createOrUpdateSubscription(
     currentPeriodEnd: data.current_period_end,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
+    planType: (data.plan_type as SubscriptionPlan | null) ?? null,
   };
 }
 
 export async function activateSubscription(
-  userId: string
+  userId: string,
+  planType: SubscriptionPlan | null = null
 ): Promise<Subscription> {
   return createOrUpdateSubscription(userId, {
     isActive: true,
+    planType,
   });
 }
 

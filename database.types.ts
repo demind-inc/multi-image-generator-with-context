@@ -43,27 +43,28 @@ export interface Database {
       usage_limits: {
         Row: {
           user_id: string; // uuid, FOREIGN KEY references auth.users(id), part of primary key
-          usage_date: string; // date, part of primary key
+          period_start: string; // date (first day of month), part of primary key
           used: number; // integer, default 0
-          daily_limit: number; // integer, default 10
+          monthly_limit: number; // integer, monthly credit allotment, default 60
         };
         Insert: {
           user_id: string; // uuid, FOREIGN KEY references auth.users(id)
-          usage_date: string; // date
+          period_start: string; // date (first day of month)
           used?: number; // integer, default 0
-          daily_limit?: number; // integer, default 10
+          monthly_limit?: number; // integer, monthly credit allotment, default 60
         };
         Update: {
           user_id?: string; // uuid, FOREIGN KEY references auth.users(id)
-          usage_date?: string; // date
+          period_start?: string; // date (first day of month)
           used?: number; // integer
-          daily_limit?: number; // integer
+          monthly_limit?: number; // integer, monthly credit allotment
         };
       };
       subscriptions: {
         Row: {
           user_id: string; // uuid, primary key, FOREIGN KEY references auth.users(id)
           is_active: boolean; // default false
+          plan_type: string | null; // text, one of basic/pro/business
           stripe_subscription_id: string | null; // text
           stripe_customer_id: string | null; // text
           current_period_end: string | null; // timestamptz
@@ -73,6 +74,7 @@ export interface Database {
         Insert: {
           user_id: string; // uuid, FOREIGN KEY references auth.users(id)
           is_active?: boolean; // default false
+          plan_type?: string | null; // text
           stripe_subscription_id?: string | null; // text
           stripe_customer_id?: string | null; // text
           current_period_end?: string | null; // timestamptz
@@ -82,6 +84,7 @@ export interface Database {
         Update: {
           user_id?: string; // uuid, FOREIGN KEY references auth.users(id)
           is_active?: boolean;
+          plan_type?: string | null; // text
           stripe_subscription_id?: string | null; // text
           stripe_customer_id?: string | null; // text
           current_period_end?: string | null; // timestamptz

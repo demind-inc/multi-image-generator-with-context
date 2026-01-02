@@ -69,14 +69,14 @@ const Hero: React.FC<HeroProps> = ({
         <div className="metric-row">
           <div className="metric-card">
             <p className="metric-card__value">
-              {isUsageLoading
-                ? "..."
-                : usageLimit
-                ? `${usageRemaining ?? usageLimit}/${usageLimit}`
-                : "--/--"}
-            </p>
-            <p className="metric-card__label">Daily limit</p>
-          </div>
+            {isUsageLoading
+              ? "..."
+              : usageLimit
+              ? `${usageRemaining ?? usageLimit}/${usageLimit}`
+              : "--/--"}
+          </p>
+          <p className="metric-card__label">Credits left</p>
+        </div>
           <div className="metric-card">
             <p className="metric-card__value">{generatedCount}</p>
             <p className="metric-card__label">Rendered scenes</p>

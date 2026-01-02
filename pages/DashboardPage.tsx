@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppMode,
-  DailyUsage,
   ImageSize,
+  MonthlyUsage,
+  SubscriptionPlan,
   PromptPreset,
   ReferenceImage,
   ReferenceSet,
@@ -15,8 +16,9 @@ import {
 } from "../services/geminiService";
 import { useAuth } from "../providers/AuthProvider";
 import {
-  DEFAULT_DAILY_LIMIT,
-  getDailyUsage,
+  DEFAULT_MONTHLY_CREDITS,
+  PLAN_CREDITS,
+  getMonthlyUsage,
   recordGeneration,
 } from "../services/usageService";
 import {
@@ -64,17 +66,22 @@ const DashboardPage: React.FC = () => {
   const [size, setSize] = useState<ImageSize>("1K");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingStoryboard, setIsCreatingStoryboard] = useState(false);
-  const [usage, setUsage] = useState<DailyUsage | null>(null);
+  const [usage, setUsage] = useState<MonthlyUsage | null>(null);
   const [isUsageLoading, setIsUsageLoading] = useState(false);
   const [usageError, setUsageError] = useState<string | null>(null);
   const [hasGeneratedFreeImage, setHasGeneratedFreeImage] =
     useState<boolean>(false);
   const [isFreeImageLoading, setIsFreeImageLoading] = useState(false);
   const [isPaymentUnlocked, setIsPaymentUnlocked] = useState<boolean>(false);
+  const [planType, setPlanType] = useState<SubscriptionPlan>("basic");
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const stripeSubscriptionLink = process.env.STRIPE_SUBSCRIPTION_LINK;
+  const stripePlanLinks: Partial<Record<SubscriptionPlan, string>> = {
+    basic: process.env.STRIPE_LINK_BASIC,
+    pro: process.env.STRIPE_LINK_PRO,
+    business: process.env.STRIPE_LINK_BUSINESS,
+  };
 
   // Redirect to auth page if not authenticated
   useEffect(() => {
@@ -92,6 +99,13 @@ const DashboardPage: React.FC = () => {
       loadLibraries(userId);
     }
   }, [authStatus, session?.user?.id]);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (authStatus === "signed_in" && userId) {
+      refreshUsage(userId);
+    }
+  }, [planType]);
 
   const refreshHasGeneratedFreeImage = async (userId: string) => {
     setIsFreeImageLoading(true);
@@ -145,6 +159,9 @@ const DashboardPage: React.FC = () => {
     try {
       const subscription = await getSubscription(userId);
       setIsPaymentUnlocked(subscription?.isActive ?? false);
+      if (subscription?.planType) {
+        setPlanType(subscription.planType);
+      }
     } catch (error) {
       console.error("Failed to fetch subscription:", error);
       setIsPaymentUnlocked(false);
@@ -152,6 +169,26 @@ const DashboardPage: React.FC = () => {
       setIsSubscriptionLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const urlPlan = params.get("plan");
+    const storedPlan = window.localStorage.getItem(
+      "preferred_plan"
+    ) as SubscriptionPlan | null;
+
+    if (urlPlan && ["basic", "pro", "business"].includes(urlPlan)) {
+      setPlanType(urlPlan as SubscriptionPlan);
+    } else if (storedPlan && ["basic", "pro", "business"].includes(storedPlan)) {
+      setPlanType(storedPlan as SubscriptionPlan);
+    }
+  }, [authStatus]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("preferred_plan", planType);
+  }, [planType]);
 
   useEffect(() => {
     if (
@@ -169,7 +206,7 @@ const DashboardPage: React.FC = () => {
     if (paidFlag) {
       const activateSubscriptionStatus = async () => {
         try {
-          await activateSubscription(session.user.id);
+          await activateSubscription(session.user.id, planType);
           setIsPaymentUnlocked(true);
           params.delete("paid");
           params.delete("session_id");
@@ -184,7 +221,7 @@ const DashboardPage: React.FC = () => {
       };
       activateSubscriptionStatus();
     }
-  }, [isPaymentUnlocked, session?.user?.id]);
+  }, [isPaymentUnlocked, session?.user?.id, planType]);
 
   // Show loading state while checking auth
   if (authStatus === "checking") {
@@ -215,8 +252,9 @@ const DashboardPage: React.FC = () => {
     references.length === 0 ||
     (!!usage && usage.remaining <= 0) ||
     !!usageError;
-  const displayUsageLimit = usage?.dailyLimit ?? DEFAULT_DAILY_LIMIT;
-  const displayUsageRemaining = usage?.remaining ?? DEFAULT_DAILY_LIMIT;
+  const planCreditLimit = PLAN_CREDITS[planType] ?? DEFAULT_MONTHLY_CREDITS;
+  const displayUsageLimit = usage?.monthlyLimit ?? planCreditLimit;
+  const displayUsageRemaining = usage?.remaining ?? planCreditLimit;
 
   const triggerUpload = () => fileInputRef.current?.click();
 
@@ -369,7 +407,7 @@ const DashboardPage: React.FC = () => {
     }
 
     try {
-      await activateSubscription(userId);
+      await activateSubscription(userId, planType);
       setIsPaymentUnlocked(true);
       setIsPaymentModalOpen(false);
     } catch (error) {
@@ -381,12 +419,12 @@ const DashboardPage: React.FC = () => {
   const refreshUsage = async (userId: string) => {
     setIsUsageLoading(true);
     try {
-      const stats = await getDailyUsage(userId);
+      const stats = await getMonthlyUsage(userId, planType);
       setUsage(stats);
       setUsageError(null);
     } catch (error) {
       console.error("Usage fetch error:", error);
-      setUsageError("Unable to load daily limit.");
+      setUsageError("Unable to load credits.");
     } finally {
       setIsUsageLoading(false);
     }
@@ -450,9 +488,9 @@ const DashboardPage: React.FC = () => {
       )
     );
 
-    let latestUsage: DailyUsage | null = usage;
+    let latestUsage: MonthlyUsage | null = usage;
     try {
-      latestUsage = await getDailyUsage(userId);
+      latestUsage = await getMonthlyUsage(userId, planType);
       setUsage(latestUsage);
       setUsageError(null);
     } catch (error) {
@@ -463,7 +501,7 @@ const DashboardPage: React.FC = () => {
             ? {
                 ...res,
                 isLoading: false,
-                error: "Unable to check usage limit.",
+                error: "Unable to check credit balance.",
               }
             : res
         )
@@ -478,12 +516,12 @@ const DashboardPage: React.FC = () => {
             ? {
                 ...res,
                 isLoading: false,
-                error: "Daily limit reached.",
+                error: "Monthly credit limit reached.",
               }
             : res
         )
       );
-      alert("Daily limit reached. Please try again tomorrow.");
+      alert("Monthly credit limit reached. Please upgrade for more.");
       return;
     }
 
@@ -493,7 +531,7 @@ const DashboardPage: React.FC = () => {
         references,
         size
       );
-      const updatedUsage = await recordGeneration(userId);
+      const updatedUsage = await recordGeneration(userId, 1, planType);
       setUsage(updatedUsage);
       markFirstGenerationComplete();
       setter((prev) =>
@@ -503,9 +541,9 @@ const DashboardPage: React.FC = () => {
       );
     } catch (error: any) {
       console.error("Regeneration error:", error);
-      if (error?.message === "DAILY_LIMIT_REACHED") {
+      if (error?.message === "MONTHLY_LIMIT_REACHED") {
         await refreshUsage(userId);
-        alert("Daily limit reached. Please try again tomorrow.");
+        alert("Monthly credit limit reached. Please upgrade for more.");
       }
       setter((prev) =>
         prev.map((res, idx) =>
@@ -569,16 +607,16 @@ const DashboardPage: React.FC = () => {
 
     setIsGenerating(true);
 
-    let latestUsage: DailyUsage | null = usage;
+    let latestUsage: MonthlyUsage | null = usage;
 
     try {
-      latestUsage = await getDailyUsage(userId);
+      latestUsage = await getMonthlyUsage(userId, planType);
       setUsage(latestUsage);
       setUsageError(null);
     } catch (error) {
       console.error("Usage check error:", error);
-      setUsageError("Unable to load daily limit.");
-      alert("Unable to check your daily limit. Please try again.");
+      setUsageError("Unable to load credits.");
+      alert("Unable to check your monthly credits. Please try again.");
       setIsGenerating(false);
       return;
     }
@@ -587,7 +625,7 @@ const DashboardPage: React.FC = () => {
       alert(
         `You can generate ${latestUsage.remaining} more image${
           latestUsage.remaining === 1 ? "" : "s"
-        } today (limit ${latestUsage.dailyLimit}).`
+        } this month (credits ${latestUsage.monthlyLimit}).`
       );
       setIsGenerating(false);
       return;
@@ -606,7 +644,7 @@ const DashboardPage: React.FC = () => {
             references,
             size
           );
-          const updatedUsage = await recordGeneration(userId);
+          const updatedUsage = await recordGeneration(userId, 1, planType);
           setUsage(updatedUsage);
           markFirstGenerationComplete();
           setManualResults((prev) =>
@@ -616,9 +654,9 @@ const DashboardPage: React.FC = () => {
           );
         } catch (error: any) {
           console.error("Manual generation error:", error);
-          if (error?.message === "DAILY_LIMIT_REACHED") {
+          if (error?.message === "MONTHLY_LIMIT_REACHED") {
             await refreshUsage(userId);
-            alert("Daily limit reached. Please try again tomorrow.");
+            alert("Monthly credit limit reached. Please upgrade for more.");
             break;
           }
           setManualResults((prev) =>
@@ -645,7 +683,7 @@ const DashboardPage: React.FC = () => {
             references,
             size
           );
-          const updatedUsage = await recordGeneration(userId);
+          const updatedUsage = await recordGeneration(userId, 1, planType);
           setUsage(updatedUsage);
           markFirstGenerationComplete();
           setSlideshowResults((prev) =>
@@ -655,9 +693,9 @@ const DashboardPage: React.FC = () => {
           );
         } catch (error: any) {
           console.error("Slideshow generation error:", error);
-          if (error?.message === "DAILY_LIMIT_REACHED") {
+          if (error?.message === "MONTHLY_LIMIT_REACHED") {
             await refreshUsage(userId);
-            alert("Daily limit reached. Please try again tomorrow.");
+            alert("Monthly credit limit reached. Please upgrade for more.");
             break;
           }
           setSlideshowResults((prev) =>
@@ -764,7 +802,8 @@ const DashboardPage: React.FC = () => {
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         onUnlock={unlockPayments}
-        paymentUrl={stripeSubscriptionLink}
+        planType={planType}
+        paymentUrls={stripePlanLinks}
       />
 
       <Footer />

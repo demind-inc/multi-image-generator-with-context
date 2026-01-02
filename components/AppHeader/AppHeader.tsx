@@ -162,7 +162,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               </svg>
               {totalScenes || "0"}
             </span>
-            <span className="pill pill--ghost" title="Daily image limit">
+            <span className="pill pill--ghost" title="Monthly credits">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="14"

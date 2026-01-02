@@ -48,19 +48,19 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
    );
    ```
 
-   Add a `usage_limits` table to track daily image generation limits:
+   Add a `usage_limits` table to track monthly image credits (1 credit = 1 image):
 
    ```sql
    create table public.usage_limits (
      user_id uuid references auth.users not null,
-     usage_date date not null,
+     period_start date not null,
      used integer not null default 0,
-     daily_limit integer not null default 10,
-     constraint usage_limits_pkey primary key (user_id, usage_date)
+     monthly_limit integer not null default 60,
+     constraint usage_limits_pkey primary key (user_id, period_start)
    );
    ```
 
-   The app will read the `daily_limit` from this table and defaults to 10 generations per day when inserting the current day's row.
+   The app reads `monthly_limit` as the monthly credit balance and defaults to 60 credits when inserting the current month's row (using the first day of the month as the period key).
 
    Add a `subscriptions` table to track user subscription status:
 
@@ -68,6 +68,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
    create table public.subscriptions (
      user_id uuid references auth.users not null primary key,
      is_active boolean not null default false,
+     plan_type text check (plan_type in ('basic','pro','business')),
      stripe_subscription_id text,
      stripe_customer_id text,
      current_period_end timestamptz,
@@ -77,6 +78,12 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
    ```
 
    The app will check this table to determine if a user has an active subscription. When a user completes payment, their subscription status is automatically updated in this table.
+
+   Credit defaults per plan are:
+
+   - basic: 60 credits/month
+   - pro: 180 credits/month
+   - business: 600 credits/month
 
    Add tables to store saved reference images and prompt presets:
 
@@ -116,13 +123,15 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
    ```
 
-4. Connect Stripe subscription checkout ($20/month) for paid generations after the first image:
+4. Connect Stripe subscription checkout links per plan:
 
    ```bash
-   STRIPE_SUBSCRIPTION_LINK=https://buy.stripe.com/your_subscription_link_here
+   STRIPE_LINK_BASIC=https://buy.stripe.com/basic_payment_link
+   STRIPE_LINK_PRO=https://buy.stripe.com/pro_payment_link
+   STRIPE_LINK_BUSINESS=https://buy.stripe.com/business_payment_link
    ```
 
-   Create a Stripe Subscription Payment Link for $20/month and use its URL here. The app will show a paywall modal after the first successful image and direct users to this link. If you include `?paid=true` or `?session_id=...` in your return URL, the dashboard will automatically activate the subscription in the database.
+   Create Stripe Payment Links for each plan price and drop them into these env vars. The paywall modal will pick the correct link based on the selected plan. If you include `?paid=true` or `?session_id=...` in your return URL, the dashboard will automatically activate the subscription in the database.
 
 5. Run the app:
    ```bash
