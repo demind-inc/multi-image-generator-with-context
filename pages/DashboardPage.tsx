@@ -22,11 +22,7 @@ import {
   getMonthlyUsage,
   recordGeneration,
 } from "../services/usageService";
-import {
-  getSubscription,
-  deactivateSubscription,
-  cancelStripeSubscription,
-} from "../services/subscriptionService";
+import { getSubscription } from "../services/subscriptionService";
 import {
   getHasGeneratedFreeImage,
   setHasGeneratedFreeImage as setHasGeneratedFreeImageInDB,
@@ -1002,16 +998,49 @@ const DashboardPage: React.FC = () => {
             onCancelSubscription={async () => {
               const userId = session?.user?.id;
               if (!userId) return;
+
+              // Confirm cancellation
+              if (
+                !confirm(
+                  "Are you sure you want to cancel your subscription? You'll lose access at the end of your billing period."
+                )
+              ) {
+                return;
+              }
+
               try {
-                await cancelStripeSubscription(stripeSubscriptionId);
-                await deactivateSubscription(userId);
+                const response = await fetch("/api/subscription/cancel", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ userId }),
+                });
+
+                if (!response.ok) {
+                  const error = await response.json();
+                  throw new Error(
+                    error.error || "Failed to cancel subscription"
+                  );
+                }
+
+                const result = await response.json();
+
+                // Update local state
                 setIsPaymentUnlocked(false);
                 setPlanLockedFromSubscription(false);
                 setPlanType("basic");
                 await refreshUsage(userId);
+                await refreshSubscription(userId);
+
+                alert(result.message || "Subscription canceled successfully");
               } catch (error) {
                 console.error("Failed to cancel subscription:", error);
-                alert("Could not cancel subscription. Please try again.");
+                alert(
+                  error instanceof Error
+                    ? error.message
+                    : "Could not cancel subscription. Please try again."
+                );
               }
             }}
             onSignOut={signOut}
@@ -1325,6 +1354,7 @@ const DashboardPage: React.FC = () => {
         planType={planType}
         paymentUrls={stripePlanLinks}
         onPlanSelect={(plan) => setPlanType(plan)}
+        userId={session?.user?.id}
       />
     </div>
   );

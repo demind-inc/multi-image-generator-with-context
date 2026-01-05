@@ -1,12 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../providers/AuthProvider";
 import { SubscriptionPlan } from "../types";
-import { getSubscription } from "../services/subscriptionService";
 import { getMonthlyUsage } from "../services/usageService";
-
-const POLL_INTERVAL_MS = 1000; // Poll every 1 second
-const FALLBACK_TIMEOUT_MS = 15000; // 15 seconds total
+import styles from "./SubscriptionRedirectPage.module.scss";
 
 const SubscriptionRedirectPage: React.FC = () => {
   const { session, authStatus } = useAuth();
@@ -17,8 +14,6 @@ const SubscriptionRedirectPage: React.FC = () => {
   >("processing");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [planType, setPlanType] = useState<SubscriptionPlan | null>(null);
-  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Redirect to auth if not signed in
@@ -31,80 +26,6 @@ const SubscriptionRedirectPage: React.FC = () => {
     if (authStatus === "checking" || !session?.user?.id || !router.isReady) {
       return;
     }
-
-    const fetchSubscriptionWithFallback = async () => {
-      startTimeRef.current = Date.now();
-
-      const pollSubscription = async (): Promise<void> => {
-        try {
-          const subscription = await getSubscription(session.user.id);
-
-          // Check if subscription is active
-          if (subscription?.isActive) {
-            // Success! Subscription found and active
-            setPlanType(subscription.planType || null);
-            setStatus("success");
-
-            // Refresh usage to reflect new subscription
-            if (subscription.planType) {
-              await getMonthlyUsage(session.user.id, subscription.planType);
-            }
-
-            // Redirect to dashboard after showing success message
-            setTimeout(() => {
-              router.replace("/dashboard");
-            }, 3000);
-            return;
-          }
-
-          // Check if we've exceeded the fallback timeout
-          const elapsed = Date.now() - (startTimeRef.current || 0);
-          if (elapsed >= FALLBACK_TIMEOUT_MS) {
-            // Timeout reached - show error
-            setStatus("error");
-            setErrorMessage(
-              "Subscription not found. Please check your payment status or contact support."
-            );
-            setTimeout(() => {
-              router.replace("/dashboard");
-            }, 5000);
-            return;
-          }
-
-          // Continue polling
-          pollTimeoutRef.current = setTimeout(
-            pollSubscription,
-            POLL_INTERVAL_MS
-          );
-        } catch (error: any) {
-          console.error("Error fetching subscription:", error);
-
-          // Check if we've exceeded the fallback timeout
-          const elapsed = Date.now() - (startTimeRef.current || 0);
-          if (elapsed >= FALLBACK_TIMEOUT_MS) {
-            // Timeout reached - show error
-            setStatus("error");
-            setErrorMessage(
-              error.message ||
-                "Failed to fetch subscription. Please contact support."
-            );
-            setTimeout(() => {
-              router.replace("/dashboard");
-            }, 5000);
-            return;
-          }
-
-          // Continue polling even on error (might be transient)
-          pollTimeoutRef.current = setTimeout(
-            pollSubscription,
-            POLL_INTERVAL_MS
-          );
-        }
-      };
-
-      // Start polling
-      pollSubscription();
-    };
 
     // Check for payment confirmation parameters
     const paidFlag = paid === "1" || paid === "true" || session_id;
@@ -130,23 +51,84 @@ const SubscriptionRedirectPage: React.FC = () => {
       setPlanType(plan);
     }
 
-    // Start fetching subscription
-    fetchSubscriptionWithFallback();
+    // Sync subscription data from Stripe
+    const syncSubscription = async () => {
+      if (!session_id || typeof session_id !== "string") {
+        setStatus("error");
+        setErrorMessage("Invalid session ID.");
+        setTimeout(() => {
+          router.replace("/dashboard");
+        }, 3000);
+        return;
+      }
 
-    // Cleanup function to clear timeout on unmount
-    return () => {
-      if (pollTimeoutRef.current) {
-        clearTimeout(pollTimeoutRef.current);
+      try {
+        const response = await fetch("/api/subscription/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: session_id,
+            userId: session.user.id,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          setStatus("error");
+          setErrorMessage(
+            error.error ||
+              "Failed to sync subscription. Please contact support."
+          );
+          setTimeout(() => {
+            router.replace("/dashboard");
+          }, 5000);
+          return;
+        }
+
+        const result = await response.json();
+        const syncedSubscription = result.subscription;
+
+        // Success! Subscription synced
+        setPlanType(syncedSubscription.plan_type || plan);
+        setStatus("success");
+
+        // Refresh usage to reflect new subscription
+        if (syncedSubscription.plan_type) {
+          await getMonthlyUsage(
+            session.user.id,
+            syncedSubscription.plan_type as SubscriptionPlan
+          );
+        }
+
+        // Redirect to dashboard after showing success message
+        setTimeout(() => {
+          router.replace("/dashboard");
+        }, 3000);
+      } catch (error: any) {
+        console.error("Error syncing subscription:", error);
+        setStatus("error");
+        setErrorMessage(
+          error.message ||
+            "Failed to sync subscription. Please contact support."
+        );
+        setTimeout(() => {
+          router.replace("/dashboard");
+        }, 5000);
       }
     };
+
+    // Start syncing
+    syncSubscription();
   }, [authStatus, session?.user?.id, router, paid, urlPlan, session_id]);
 
   // Show loading state while checking auth
   if (authStatus === "checking") {
     return (
-      <div className="subscription-redirect">
-        <div className="subscription-redirect__content">
-          <div className="subscription-redirect__spinner" />
+      <div className={styles["subscription-redirect"]}>
+        <div className={styles["subscription-redirect__content"]}>
+          <div className={styles["subscription-redirect__spinner"]} />
           <p>Checking your session...</p>
         </div>
       </div>
@@ -156,9 +138,11 @@ const SubscriptionRedirectPage: React.FC = () => {
   // Show unauthorized state
   if (authStatus === "signed_out") {
     return (
-      <div className="subscription-redirect">
-        <div className="subscription-redirect__content">
-          <div className="subscription-redirect__icon subscription-redirect__icon--error">
+      <div className={styles["subscription-redirect"]}>
+        <div className={styles["subscription-redirect__content"]}>
+          <div
+            className={`${styles["subscription-redirect__icon"]} ${styles["subscription-redirect__icon--error"]}`}
+          >
             ⚠️
           </div>
           <h2>Authentication Required</h2>
@@ -175,11 +159,11 @@ const SubscriptionRedirectPage: React.FC = () => {
   }
 
   return (
-    <div className="subscription-redirect">
-      <div className="subscription-redirect__content">
+    <div className={styles["subscription-redirect"]}>
+      <div className={styles["subscription-redirect__content"]}>
         {status === "processing" && (
           <>
-            <div className="subscription-redirect__spinner" />
+            <div className={styles["subscription-redirect__spinner"]} />
             <h2>Activating Your Subscription</h2>
             <p>Please wait while we activate your subscription...</p>
           </>
@@ -187,7 +171,9 @@ const SubscriptionRedirectPage: React.FC = () => {
 
         {status === "success" && (
           <>
-            <div className="subscription-redirect__icon subscription-redirect__icon--success">
+            <div
+              className={`${styles["subscription-redirect__icon"]} ${styles["subscription-redirect__icon--success"]}`}
+            >
               ✓
             </div>
             <h2>Subscription Activated!</h2>
@@ -195,7 +181,7 @@ const SubscriptionRedirectPage: React.FC = () => {
               Your {planType ? planType.toUpperCase() : ""} plan has been
               successfully activated.
             </p>
-            <p className="subscription-redirect__redirect">
+            <p className={styles["subscription-redirect__redirect"]}>
               Redirecting to dashboard...
             </p>
           </>
@@ -203,7 +189,9 @@ const SubscriptionRedirectPage: React.FC = () => {
 
         {status === "error" && (
           <>
-            <div className="subscription-redirect__icon subscription-redirect__icon--error">
+            <div
+              className={`${styles["subscription-redirect__icon"]} ${styles["subscription-redirect__icon--error"]}`}
+            >
               ✕
             </div>
             <h2>Activation Failed</h2>
@@ -211,7 +199,7 @@ const SubscriptionRedirectPage: React.FC = () => {
               {errorMessage ||
                 "An error occurred while activating your subscription."}
             </p>
-            <p className="subscription-redirect__redirect">
+            <p className={styles["subscription-redirect__redirect"]}>
               Redirecting to dashboard...
             </p>
           </>

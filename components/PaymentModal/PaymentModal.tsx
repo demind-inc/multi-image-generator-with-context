@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { SubscriptionPlan } from "../../types";
 import styles from "./PaymentModal.module.scss";
 
@@ -8,6 +8,7 @@ interface PaymentModalProps {
   planType: SubscriptionPlan;
   paymentUrls?: Partial<Record<SubscriptionPlan, string>>;
   onPlanSelect?: (plan: SubscriptionPlan) => void;
+  userId?: string;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -16,8 +17,55 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   planType,
   paymentUrls,
   onPlanSelect,
+  userId,
 }) => {
+  const [loadingPlan, setLoadingPlan] = useState<SubscriptionPlan | null>(null);
+
   if (!isOpen) return null;
+
+  const handlePlanClick = async (plan: SubscriptionPlan) => {
+    onPlanSelect?.(plan);
+
+    // If userId is provided, use the new Checkout Session API
+    if (userId) {
+      setLoadingPlan(plan);
+      try {
+        const response = await fetch("/api/subscription/checkout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            plan,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("Failed to create checkout session:", error);
+          alert(`Failed to start checkout: ${error.error || "Unknown error"}`);
+          setLoadingPlan(null);
+          return;
+        }
+
+        const { url } = await response.json();
+        if (url) {
+          window.location.href = url;
+        }
+      } catch (error) {
+        console.error("Error creating checkout session:", error);
+        alert("Failed to start checkout. Please try again.");
+        setLoadingPlan(null);
+      }
+    } else {
+      // Fallback to static payment URLs if userId is not provided
+      const planUrl = paymentUrls?.[plan];
+      if (planUrl) {
+        window.location.href = planUrl;
+      }
+    }
+  };
 
   const plans = [
     {
@@ -102,26 +150,53 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   isSelected ? styles["is-selected"] : ""
                 }`}
               >
-                <p className={styles["payment-modal__plan-badge"]}>{planOption.badge}</p>
-                <p className={styles["payment-modal__plan-price"]}>{planOption.price}</p>
+                <p className={styles["payment-modal__plan-badge"]}>
+                  {planOption.badge}
+                </p>
+                <p className={styles["payment-modal__plan-price"]}>
+                  {planOption.price}
+                </p>
                 <p className={styles["payment-modal__plan-credits"]}>
                   {planOption.credits}
                 </p>
-                {planUrl ? (
-                  <a
-                    className={`primary-button ${styles["payment-modal__plan-button"]}`}
-                    href={planUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => onPlanSelect?.(planOption.plan)}
-                  >
-                    Choose {planOption.badge}
-                  </a>
-                ) : (
-                  <div className={styles["payment-modal__plan-error"]}>
-                    Link not configured
-                  </div>
-                )}
+                {(() => {
+                  const isLoading = loadingPlan === planOption.plan;
+                  const planUrl = paymentUrls?.[planOption.plan];
+
+                  if (userId) {
+                    // Use new Checkout Session API
+                    return (
+                      <button
+                        className={`primary-button ${styles["payment-modal__plan-button"]}`}
+                        onClick={() => handlePlanClick(planOption.plan)}
+                        disabled={isLoading}
+                      >
+                        {isLoading
+                          ? "Loading..."
+                          : `Choose ${planOption.badge}`}
+                      </button>
+                    );
+                  } else if (planUrl) {
+                    // Fallback to static payment URLs
+                    return (
+                      <a
+                        className={`primary-button ${styles["payment-modal__plan-button"]}`}
+                        href={planUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => onPlanSelect?.(planOption.plan)}
+                      >
+                        Choose {planOption.badge}
+                      </a>
+                    );
+                  } else {
+                    return (
+                      <div className={styles["payment-modal__plan-error"]}>
+                        Link not configured
+                      </div>
+                    );
+                  }
+                })()}
               </div>
             );
           })}

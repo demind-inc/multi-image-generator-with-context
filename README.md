@@ -123,41 +123,64 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
    ```
 
-4. Connect Stripe subscription checkout links per plan:
+4. Configure Stripe for subscription checkout:
 
    ```bash
+   # Stripe API Keys
+   STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
+   STRIPE_WEBHOOK_SECRET=whsec_... (optional, but recommended for production)
+
+   # Stripe Price IDs (required for Checkout Sessions API)
+   # Get these from Stripe Dashboard → Products → select product → select price → Price ID (starts with price_)
+   STRIPE_PRICE_ID_BASIC=price_xxxxx
+   STRIPE_PRICE_ID_PRO=price_xxxxx
+   STRIPE_PRICE_ID_BUSINESS=price_xxxxx
+
+   # Optional: Base URL for checkout redirects (defaults to VERCEL_URL or localhost:3000)
+   NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+
+   # Legacy: Payment Links (optional, used as fallback if Price IDs not set)
    STRIPE_LINK_BASIC=https://buy.stripe.com/basic_payment_link
    STRIPE_LINK_PRO=https://buy.stripe.com/pro_payment_link
    STRIPE_LINK_BUSINESS=https://buy.stripe.com/business_payment_link
-   STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
-   STRIPE_WEBHOOK_SECRET=whsec_... (optional, but recommended for production)
    ```
 
-   Create Stripe Payment Links for each plan price and drop them into these env vars. The paywall modal will pick the correct link based on the selected plan.
+   **Getting Stripe Price IDs:**
 
-   **Important:** Configure the return URL in each Stripe Payment Link's settings to redirect to the subscription confirmation page:
+   1. Go to [Stripe Dashboard](https://dashboard.stripe.com) → Products
+   2. Select your product (or create one for each plan: Basic, Pro, Business)
+   3. Click on the price you want to use
+   4. Copy the Price ID (starts with `price_`)
+   5. Add it to the corresponding environment variable
 
-   - Basic plan: `https://yourdomain.com/subscription/redirect?paid=1&plan=basic`
-   - Pro plan: `https://yourdomain.com/subscription/redirect?paid=1&plan=pro`
-   - Business plan: `https://yourdomain.com/subscription/redirect?paid=1&plan=business`
-
-   The subscription redirect page will automatically activate the subscription via the backend API and redirect to the dashboard.
+   The app uses Stripe Checkout Sessions API to create payment links dynamically with metadata. The subscription redirect page will automatically sync the subscription data from Stripe and activate it.
 
 5. **Backend Server Configuration (Next.js API Routes):**
 
    The app uses Next.js API routes (automatically deployed as Vercel serverless functions). The backend handles:
 
-   - Subscription activation after payment redirect (`/api/subscription/redirect`)
-   - Stripe webhook events (`/api/webhooks/stripe`)
+   - Creating Stripe Checkout Sessions (`/api/subscription/checkout`)
+   - Syncing subscription data after payment (`/api/subscription/sync`)
+   - Canceling subscriptions (`/api/subscription/cancel`)
+   - Stripe webhook events (`/api/webhooks/stripe`) - for ongoing subscription events
    - Health check endpoint (`/api/health`)
 
    **Environment Variables for Backend (set in Vercel Dashboard):**
 
    ```bash
+   # Supabase
    SUPABASE_URL=your_supabase_url
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key  # Required for backend operations
+   SUPABASE_ROLE_KEY=your_supabase_service_role_key  # Required for backend operations
+
+   # Stripe
    STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
    STRIPE_WEBHOOK_SECRET=whsec_... (get from Stripe Dashboard → Webhooks)
+   STRIPE_PRICE_ID_BASIC=price_xxxxx
+   STRIPE_PRICE_ID_PRO=price_xxxxx
+   STRIPE_PRICE_ID_BUSINESS=price_xxxxx
+
+   # Optional
+   NEXT_PUBLIC_BASE_URL=https://yourdomain.com  # For checkout redirect URLs
    ```
 
    **Setting up Stripe Webhook:**
@@ -216,15 +239,21 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
    GEMINI_API_KEY=your_gemini_api_key
    SUPABASE_URL=your_supabase_url
    SUPABASE_ANON_KEY=your_supabase_anon_key
-   STRIPE_LINK_BASIC=https://buy.stripe.com/basic_payment_link
-   STRIPE_LINK_PRO=https://buy.stripe.com/pro_payment_link
-   STRIPE_LINK_BUSINESS=https://buy.stripe.com/business_payment_link
+   NEXT_PUBLIC_BASE_URL=https://yourdomain.com  # Optional, for checkout redirects
 
    # Backend API (for serverless functions)
    SUPABASE_URL=your_supabase_url
    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
    STRIPE_WEBHOOK_SECRET=whsec_... (optional but recommended)
+   STRIPE_PRICE_ID_BASIC=price_xxxxx
+   STRIPE_PRICE_ID_PRO=price_xxxxx
+   STRIPE_PRICE_ID_BUSINESS=price_xxxxx
+
+   # Legacy: Payment Links (optional, used as fallback)
+   STRIPE_LINK_BASIC=https://buy.stripe.com/basic_payment_link
+   STRIPE_LINK_PRO=https://buy.stripe.com/pro_payment_link
+   STRIPE_LINK_BUSINESS=https://buy.stripe.com/business_payment_link
    ```
 
    **Important Notes:**
