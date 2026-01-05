@@ -14,14 +14,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
 ### Environment files
 
-- `.env.development` contains the current local values (mirrors the previous `.env`).
-- `.env.production` is a template for your production secrets; copy these into Vercel Project Settings → Environment Variables.
-- `npm run dev` uses `.env.development` by default, and `npm run build` / `npm start` load `.env.production` automatically via `@next/env`.
-- `scripts/with-env.js` is a thin wrapper around `@next/env` so package scripts always pick the correct file based on the command.
-- If you need to override with `.env.local`, you can still copy:
-  - `npm run env:apply:dev` — use the development file locally
-  - `npm run env:apply:prod` — use the production file locally (useful for a pre-deploy smoke test)
-
 1. Install dependencies:
 
    ```bash
@@ -177,21 +169,26 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
    **Environment Variables for Backend (set in Vercel Dashboard):**
 
-   ```bash
+   en
+
    # Supabase
+
    SUPABASE_URL=your_supabase_url
-   SUPABASE_ROLE_KEY=your_supabase_service_role_key  # Required for backend operations
+   SUPABASE_ROLE_KEY=your_supabase_service_role_key # Required for backend operations
 
    # Stripe
-   STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
-   STRIPE_WEBHOOK_SECRET=whsec_... (get from Stripe Dashboard → Webhooks)
+
+   STRIPE*SECRET_KEY=sk_live*... (or sk*test*... for testing)
+   STRIPE*WEBHOOK_SECRET=whsec*... (get from Stripe Dashboard → Webhooks)
    STRIPE_PRICE_ID_BASIC=price_xxxxx
    STRIPE_PRICE_ID_PRO=price_xxxxx
    STRIPE_PRICE_ID_BUSINESS=price_xxxxx
    STRIPE_WEBHOOK_SECRET=xxxxx
 
    # Optional
-   NEXT_PUBLIC_BASE_URL=https://yourdomain.com  # For checkout redirect URLs
+
+   NEXT_PUBLIC_BASE_URL=https://yourdomain.com # For checkout redirect URLs
+
    ```
 
    **Setting up Stripe Webhook:**
@@ -208,6 +205,8 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
    5. Copy the webhook signing secret and add it to `STRIPE_WEBHOOK_SECRET` in Vercel
 
    **Note:** The backend uses Supabase Service Role Key (not the anon key) to bypass RLS and update subscriptions. Make sure to set `SUPABASE_SERVICE_ROLE_KEY` in your Vercel environment variables.
+
+   ```
 
 6. **Deploy to Vercel:**
 
