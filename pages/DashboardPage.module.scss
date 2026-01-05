@@ -127,3 +127,10 @@
     color: #f8fafc;
   }
 }
+
+.sidebar__panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}

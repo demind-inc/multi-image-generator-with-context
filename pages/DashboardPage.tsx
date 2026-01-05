@@ -1158,7 +1158,7 @@ const DashboardPage: React.FC = () => {
             {activePanel === "storyboard" && (
               <section className="card">
                 <h3 className="card__title">2. Slideshow Story</h3>
-                <div className="sidebar__panel-content">
+                <div className={styles["sidebar__panel-content"]}>
                   <div>
                     <label className="label">Overall Topic</label>
                     <input

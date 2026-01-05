@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../providers/AuthProvider";
 import { SubscriptionPlan } from "../types";
-import {
-  activateSubscription,
-  getSubscription,
-} from "../services/subscriptionService";
+import { getSubscription } from "../services/subscriptionService";
 import { getMonthlyUsage } from "../services/usageService";
+
+const POLL_INTERVAL_MS = 1000; // Poll every 1 second
+const FALLBACK_TIMEOUT_MS = 15000; // 15 seconds total
 
 const SubscriptionRedirectPage: React.FC = () => {
   const { session, authStatus } = useAuth();
@@ -17,6 +17,8 @@ const SubscriptionRedirectPage: React.FC = () => {
   >("processing");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [planType, setPlanType] = useState<SubscriptionPlan | null>(null);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Redirect to auth if not signed in
@@ -30,87 +32,113 @@ const SubscriptionRedirectPage: React.FC = () => {
       return;
     }
 
-    const processSubscription = async () => {
-      try {
-        // Check for payment confirmation parameters
-        const paidFlag = paid === "1" || paid === "true" || session_id;
+    const fetchSubscriptionWithFallback = async () => {
+      startTimeRef.current = Date.now();
 
-        if (!paidFlag) {
-          setStatus("error");
-          setErrorMessage("No payment confirmation found.");
-          setTimeout(() => {
-            router.replace("/dashboard");
-          }, 3000);
-          return;
+      const pollSubscription = async (): Promise<void> => {
+        try {
+          const subscription = await getSubscription(session.user.id);
+
+          // Check if subscription is active
+          if (subscription?.isActive) {
+            // Success! Subscription found and active
+            setPlanType(subscription.planType || null);
+            setStatus("success");
+
+            // Refresh usage to reflect new subscription
+            if (subscription.planType) {
+              await getMonthlyUsage(session.user.id, subscription.planType);
+            }
+
+            // Redirect to dashboard after showing success message
+            setTimeout(() => {
+              router.replace("/dashboard");
+            }, 3000);
+            return;
+          }
+
+          // Check if we've exceeded the fallback timeout
+          const elapsed = Date.now() - (startTimeRef.current || 0);
+          if (elapsed >= FALLBACK_TIMEOUT_MS) {
+            // Timeout reached - show error
+            setStatus("error");
+            setErrorMessage(
+              "Subscription not found. Please check your payment status or contact support."
+            );
+            setTimeout(() => {
+              router.replace("/dashboard");
+            }, 5000);
+            return;
+          }
+
+          // Continue polling
+          pollTimeoutRef.current = setTimeout(
+            pollSubscription,
+            POLL_INTERVAL_MS
+          );
+        } catch (error: any) {
+          console.error("Error fetching subscription:", error);
+
+          // Check if we've exceeded the fallback timeout
+          const elapsed = Date.now() - (startTimeRef.current || 0);
+          if (elapsed >= FALLBACK_TIMEOUT_MS) {
+            // Timeout reached - show error
+            setStatus("error");
+            setErrorMessage(
+              error.message ||
+                "Failed to fetch subscription. Please contact support."
+            );
+            setTimeout(() => {
+              router.replace("/dashboard");
+            }, 5000);
+            return;
+          }
+
+          // Continue polling even on error (might be transient)
+          pollTimeoutRef.current = setTimeout(
+            pollSubscription,
+            POLL_INTERVAL_MS
+          );
         }
+      };
 
-        // Get plan from URL or default to basic
-        const plan: SubscriptionPlan =
-          urlPlan &&
-          typeof urlPlan === "string" &&
-          ["basic", "pro", "business"].includes(urlPlan)
-            ? (urlPlan as SubscriptionPlan)
-            : "basic";
-
-        setPlanType(plan);
-
-        // Get session ID if available
-        const sessionId =
-          typeof session_id === "string" ? session_id : undefined;
-
-        // Call backend API to activate subscription
-        const response = await fetch("/api/subscription/redirect", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: session.user.id,
-            plan,
-            sessionId,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to activate subscription");
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error("Subscription activation failed");
-        }
-
-        // Verify subscription was activated
-        const subscription = await getSubscription(session.user.id);
-        if (!subscription?.isActive) {
-          throw new Error("Subscription activation failed verification");
-        }
-
-        // Refresh usage to reflect new subscription
-        await getMonthlyUsage(session.user.id, plan);
-
-        setStatus("success");
-
-        // Redirect to dashboard after showing success message
-        setTimeout(() => {
-          router.replace("/dashboard");
-        }, 3000);
-      } catch (error: any) {
-        console.error("Failed to activate subscription:", error);
-        setStatus("error");
-        setErrorMessage(
-          error.message ||
-            "Failed to activate subscription. Please contact support."
-        );
-        setTimeout(() => {
-          router.replace("/dashboard");
-        }, 5000);
-      }
+      // Start polling
+      pollSubscription();
     };
 
-    processSubscription();
+    // Check for payment confirmation parameters
+    const paidFlag = paid === "1" || paid === "true" || session_id;
+
+    if (!paidFlag) {
+      setStatus("error");
+      setErrorMessage("No payment confirmation found.");
+      setTimeout(() => {
+        router.replace("/dashboard");
+      }, 3000);
+      return;
+    }
+
+    // Get plan from URL if available (for display purposes)
+    const plan: SubscriptionPlan | null =
+      urlPlan &&
+      typeof urlPlan === "string" &&
+      ["basic", "pro", "business"].includes(urlPlan)
+        ? (urlPlan as SubscriptionPlan)
+        : null;
+
+    if (plan) {
+      setPlanType(plan);
+    }
+
+    // Start fetching subscription
+    fetchSubscriptionWithFallback();
+
+    // Cleanup function to clear timeout on unmount
+    return () => {
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+      }
+    };
   }, [authStatus, session?.user?.id, router, paid, urlPlan, session_id]);
 
   // Show loading state while checking auth
