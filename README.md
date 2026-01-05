@@ -12,6 +12,16 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
 **Prerequisites:** Node.js
 
+### Environment files
+
+- `.env.development` contains the current local values (mirrors the previous `.env`).
+- `.env.production` is a template for your production secrets; copy these into Vercel Project Settings → Environment Variables.
+- `npm run dev` uses `.env.development` by default, and `npm run build` / `npm start` load `.env.production` automatically via `@next/env`.
+- `scripts/with-env.js` is a thin wrapper around `@next/env` so package scripts always pick the correct file based on the command.
+- If you need to override with `.env.local`, you can still copy:
+  - `npm run env:apply:dev` — use the development file locally
+  - `npm run env:apply:prod` — use the production file locally (useful for a pre-deploy smoke test)
+
 1. Install dependencies:
 
    ```bash
@@ -20,7 +30,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
    yarn install
    ```
 
-2. Create a `.env` file in the root directory and add your Gemini API key:
+2. Add your Gemini API key to `.env.development` (or `.env.local` if you prefer):
 
    ```bash
    GEMINI_API_KEY=your_api_key_here
