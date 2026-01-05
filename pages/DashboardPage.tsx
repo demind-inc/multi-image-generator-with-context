@@ -131,7 +131,7 @@ const DashboardPage: React.FC = () => {
     business: "$79/mo",
   };
 
-  const [activePanel, setActivePanel] = useState<PanelKey>("storyboard");
+  const [activePanel, setActivePanel] = useState<PanelKey>("manual");
   // Derive mode from activePanel
   const mode: AppMode = useMemo(() => {
     return activePanel === "storyboard" ? "slideshow" : "manual";
@@ -293,6 +293,34 @@ const DashboardPage: React.FC = () => {
       setPlanType(storedPlan as SubscriptionPlan);
     }
   }, [authStatus, planLockedFromSubscription]);
+
+  // Warn user before refreshing during image generation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Check if generation is in progress
+      const isAnyGenerating = isGenerating || isCreatingStoryboard;
+      const hasLoadingResults =
+        slideshowResults.some((r) => r.isLoading) ||
+        manualResults.some((r) => r.isLoading);
+
+      if (isAnyGenerating || hasLoadingResults) {
+        // Modern browsers ignore custom messages, but we still need to set returnValue
+        e.preventDefault();
+        e.returnValue = ""; // Required for Chrome
+        // Show alert as requested
+        window.alert(
+          "Image generation is in progress. Are you sure you want to leave?"
+        );
+        return ""; // Required for some browsers
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isGenerating, isCreatingStoryboard, slideshowResults, manualResults]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

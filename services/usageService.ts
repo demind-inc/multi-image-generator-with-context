@@ -18,10 +18,7 @@ const getCurrentPeriodStart = () => {
 const getPlanCredits = (planType?: SubscriptionPlan | null) =>
   PLAN_CREDITS[planType || "basic"] ?? DEFAULT_MONTHLY_CREDITS;
 
-const normalizeUsage = (
-  record: any,
-  fallbackLimit: number
-): MonthlyUsage => {
+const normalizeUsage = (record: any, fallbackLimit: number): MonthlyUsage => {
   const monthlyLimit = Math.max(
     record?.monthly_limit ?? fallbackLimit,
     fallbackLimit
@@ -85,19 +82,15 @@ export async function recordGeneration(
   }
 
   // Use upsert to create the record if it doesn't exist, or update if it does
+  // Supabase will automatically use the primary key constraint (usage_limits_pkey)
   const { data, error } = await supabase
     .from(USAGE_TABLE)
-    .upsert(
-      {
-        user_id: userId,
-        period_start: currentUsage.periodStart,
-        used: currentUsage.used + amount,
-        monthly_limit: currentUsage.monthlyLimit,
-      } as any,
-      {
-        onConflict: "user_id,period_start",
-      }
-    )
+    .upsert({
+      user_id: userId,
+      period_start: currentUsage.periodStart,
+      used: currentUsage.used + amount,
+      monthly_limit: currentUsage.monthlyLimit,
+    } as any)
     .select("user_id, period_start, used, monthly_limit")
     .single();
 
@@ -117,7 +110,7 @@ export async function recordGeneration(
       }
 
       if (fetchedData) {
-        return normalizeUsage(fetchedData);
+        return normalizeUsage(fetchedData, currentUsage.monthlyLimit);
       }
 
       // If still no data, return the expected values
@@ -149,5 +142,5 @@ export async function recordGeneration(
     };
   }
 
-  return normalizeUsage(data);
+  return normalizeUsage(data, currentUsage.monthlyLimit);
 }
