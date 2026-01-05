@@ -139,10 +139,10 @@ export async function unsubscribeSubscription(
 ): Promise<Subscription> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase
-    .from(SUBSCRIPTION_TABLE)
+  const { error } = await (supabase.from(SUBSCRIPTION_TABLE) as any)
     .update({
       status: "unsubscribed",
+      unsubscribed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);
@@ -151,10 +151,11 @@ export async function unsubscribeSubscription(
     throw error;
   }
 
-  return (
-    getSubscription(userId) ||
-    Promise.reject(new Error("Failed to get subscription"))
-  );
+  const updatedSubscription = await getSubscription(userId);
+  if (!updatedSubscription) {
+    throw new Error("Failed to get subscription after unsubscribe");
+  }
+  return updatedSubscription;
 }
 
 export async function cancelStripeSubscription(
