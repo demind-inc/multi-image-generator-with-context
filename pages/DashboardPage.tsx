@@ -271,10 +271,13 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  const [subscription, setSubscription] = React.useState<Awaited<ReturnType<typeof getSubscription>>>(null);
+
   const refreshSubscription = async (userId: string) => {
     setIsSubscriptionLoading(true);
     try {
       const subscription = await getSubscription(userId);
+      setSubscription(subscription);
       setIsPaymentUnlocked(subscription?.isActive ?? false);
       if (subscription?.planType) {
         setPlanType(subscription.planType);
@@ -285,6 +288,7 @@ const DashboardPage: React.FC = () => {
       setStripeSubscriptionId(subscription?.stripeSubscriptionId);
     } catch (error) {
       console.error("Failed to fetch subscription:", error);
+      setSubscription(null);
       setIsPaymentUnlocked(false);
       setPlanLockedFromSubscription(false);
       setStripeSubscriptionId(null);
@@ -994,6 +998,8 @@ const DashboardPage: React.FC = () => {
               hasSubscription ? displayUsageRemaining : freeCreditsRemaining
             }
             totalCredits={hasSubscription ? displayUsageLimit : undefined}
+            expiredAt={subscription?.expiredAt || null}
+            unsubscribedAt={subscription?.unsubscribedAt || null}
             onOpenBilling={() => setIsPaymentModalOpen(true)}
             onCancelSubscription={async () => {
               const userId = session?.user?.id;

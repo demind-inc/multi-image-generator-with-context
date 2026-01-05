@@ -18,6 +18,8 @@ interface SidebarProps {
   planType?: string;
   remainingCredits?: number;
   totalCredits?: number;
+  expiredAt?: string | null;
+  unsubscribedAt?: string | null;
   onOpenBilling?: () => void;
   onCancelSubscription?: () => void;
   onSignOut: () => void;
@@ -36,6 +38,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   planType,
   remainingCredits,
   totalCredits,
+  expiredAt,
+  unsubscribedAt,
   onOpenBilling,
   onCancelSubscription,
   onSignOut,
@@ -116,6 +120,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                       ? subscriptionPrice || "Active"
                       : "3 credits included"}
                   </p>
+                  {expiredAt && (
+                    <p className={styles["sidebar__profile-meta"]} style={{ fontSize: "0.75rem", color: "#ff6b6b" }}>
+                      Expired: {new Date(expiredAt).toLocaleDateString()}
+                    </p>
+                  )}
+                  {unsubscribedAt && (
+                    <p className={styles["sidebar__profile-meta"]} style={{ fontSize: "0.75rem", color: "#ffa500" }}>
+                      Unsubscribed: {new Date(unsubscribedAt).toLocaleDateString()}
+                    </p>
+                  )}
                   <div className={styles["sidebar__profile-actions"]}>
                     {isSubscribed ? (
                       <button onClick={onCancelSubscription}>

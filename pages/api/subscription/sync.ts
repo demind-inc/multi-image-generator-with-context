@@ -138,21 +138,45 @@ export default async function handler(
       subscriptionStatus = "unsubscribed";
     }
 
+    // Check existing subscription to determine if we need to set dates
+    const { data: existingSubscription } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const updateData: any = {
+      user_id: userId,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+      status: subscriptionStatus,
+      plan_type: planType,
+      current_period_end: currentPeriodEnd,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Set expired_at when status becomes "expired"
+    if (
+      subscriptionStatus === "expired" &&
+      existingSubscription?.status !== "expired"
+    ) {
+      updateData.expired_at = new Date().toISOString();
+    }
+
+    // Set unsubscribed_at when status becomes "unsubscribed"
+    if (
+      subscriptionStatus === "unsubscribed" &&
+      existingSubscription?.status !== "unsubscribed"
+    ) {
+      updateData.unsubscribed_at = new Date().toISOString();
+    }
+
     // Map Stripe customer → user and sync subscription data
-    const { error: syncError } = await supabase.from("subscriptions").upsert(
-      {
-        user_id: userId,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-        status: subscriptionStatus,
-        plan_type: planType,
-        current_period_end: currentPeriodEnd,
-        updated_at: new Date().toISOString(),
-      },
-      {
+    const { error: syncError } = await supabase
+      .from("subscriptions")
+      .upsert(updateData, {
         onConflict: "user_id",
-      }
-    );
+      });
 
     if (syncError) {
       console.error("Failed to sync subscription:", syncError);

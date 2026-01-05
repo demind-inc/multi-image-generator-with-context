@@ -10,9 +10,12 @@ export interface Subscription {
   stripeSubscriptionId?: string | null;
   stripeCustomerId?: string | null;
   currentPeriodEnd?: string | null;
+  expiredAt?: string | null;
+  unsubscribedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
   planType?: SubscriptionPlan | null;
+  status?: string | null;
 }
 
 export async function getSubscription(
@@ -42,9 +45,12 @@ export async function getSubscription(
     stripeSubscriptionId: subscription.stripe_subscription_id,
     stripeCustomerId: subscription.stripe_customer_id,
     currentPeriodEnd: subscription.current_period_end,
+    expiredAt: subscription.expired_at,
+    unsubscribedAt: subscription.unsubscribed_at,
     createdAt: subscription.created_at,
     updatedAt: subscription.updated_at,
     planType: (subscription.plan_type as SubscriptionPlan | null) ?? null,
+    status: subscription.status,
   };
 }
 
@@ -101,9 +107,12 @@ export async function createOrUpdateSubscription(
     stripeSubscriptionId: subscription.stripe_subscription_id,
     stripeCustomerId: subscription.stripe_customer_id,
     currentPeriodEnd: subscription.current_period_end,
+    expiredAt: subscription?.expired_at,
+    unsubscribedAt: subscription?.unsubscribed_at,
     createdAt: subscription.created_at,
     updatedAt: subscription.updated_at,
     planType: (subscription?.plan_type as SubscriptionPlan | null) ?? null,
+    status: subscription?.status,
   };
 }
 

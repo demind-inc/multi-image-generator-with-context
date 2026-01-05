@@ -118,13 +118,28 @@ export default async function handler(
 
       // Update database if status needs to change
       if (newStatus !== null && newStatus !== dbSubscription.status) {
+        const updateData: any = {
+          status: newStatus,
+          current_period_end: currentPeriodEnd,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Set expired_at when status becomes "expired"
+        if (newStatus === "expired" && dbSubscription.status !== "expired") {
+          updateData.expired_at = new Date().toISOString();
+        }
+
+        // Set unsubscribed_at when status becomes "unsubscribed"
+        if (
+          newStatus === "unsubscribed" &&
+          dbSubscription.status !== "unsubscribed"
+        ) {
+          updateData.unsubscribed_at = new Date().toISOString();
+        }
+
         const { error: updateError } = await supabase
           .from("subscriptions")
-          .update({
-            status: newStatus,
-            current_period_end: currentPeriodEnd,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq("stripe_subscription_id", subscription.id);
 
         if (updateError) {
@@ -200,6 +215,7 @@ export default async function handler(
         .from("subscriptions")
         .update({
           status: "unsubscribed",
+          unsubscribed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);

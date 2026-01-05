@@ -64,6 +64,7 @@ export default async function handler(
         .from("subscriptions")
         .update({
           status: "unsubscribed",
+          unsubscribed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
@@ -114,6 +115,7 @@ export default async function handler(
       .from("subscriptions")
       .update({
         status: "unsubscribed",
+        unsubscribed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId);

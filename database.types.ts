@@ -68,26 +68,32 @@ export interface Database {
           stripe_subscription_id: string | null; // text
           stripe_customer_id: string | null; // text
           current_period_end: string | null; // timestamptz
+          expired_at: string | null; // timestamptz, when subscription expired
+          unsubscribed_at: string | null; // timestamptz, when subscription was unsubscribed
           created_at: string; // timestamptz, default now()
           updated_at: string; // timestamptz, default now()
         };
         Insert: {
           user_id: string; // uuid, FOREIGN KEY references auth.users(id)
-          status?: string | null; // text, one of 'active'/'unsubscribed', nullable
+          status?: string | null; // text, one of 'active'/'unsubscribed'/'expired', nullable
           plan_type?: string | null; // text
           stripe_subscription_id?: string | null; // text
           stripe_customer_id?: string | null; // text
           current_period_end?: string | null; // timestamptz
+          expired_at?: string | null; // timestamptz, when subscription expired
+          unsubscribed_at?: string | null; // timestamptz, when subscription was unsubscribed
           created_at?: string; // timestamptz, default now()
           updated_at?: string; // timestamptz, default now()
         };
         Update: {
           user_id?: string; // uuid, FOREIGN KEY references auth.users(id)
-          status?: string | null; // text, one of 'active'/'unsubscribed', nullable
+          status?: string | null; // text, one of 'active'/'unsubscribed'/'expired', nullable
           plan_type?: string | null; // text
           stripe_subscription_id?: string | null; // text
           stripe_customer_id?: string | null; // text
           current_period_end?: string | null; // timestamptz
+          expired_at?: string | null; // timestamptz, when subscription expired
+          unsubscribed_at?: string | null; // timestamptz, when subscription was unsubscribed
           created_at?: string | null; // timestamptz
           updated_at?: string | null; // timestamptz
         };
