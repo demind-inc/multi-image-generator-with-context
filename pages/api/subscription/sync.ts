@@ -122,15 +122,21 @@ export default async function handler(
       (metadata.plan as SubscriptionPlan) ||
       "basic";
 
-    // Check if this is a new subscription or plan change by checking existing subscription
-    const { data: existingSubscription } = await supabase
-      .from("subscriptions")
-      .select("plan_type")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // Determine subscription status
+    const currentPeriodEnd = subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null;
+    const now = new Date();
+    const periodEndDate = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+    const hasExpired =
+      periodEndDate && now > periodEndDate && subscription.status === "active";
 
-    const isNewPlan =
-      !existingSubscription || existingSubscription.plan_type !== planType;
+    let subscriptionStatus: string | null = null;
+    if (subscription.status === "active") {
+      subscriptionStatus = hasExpired ? "expired" : "active";
+    } else if (subscription.status === "canceled") {
+      subscriptionStatus = "unsubscribed";
+    }
 
     // Map Stripe customer → user and sync subscription data
     const { error: syncError } = await supabase.from("subscriptions").upsert(
@@ -138,11 +144,9 @@ export default async function handler(
         user_id: userId,
         stripe_customer_id: customerId,
         stripe_subscription_id: subscriptionId,
-        is_active: subscription.status === "active",
+        status: subscriptionStatus,
         plan_type: planType,
-        current_period_end: subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
-          : null,
+        current_period_end: currentPeriodEnd,
         updated_at: new Date().toISOString(),
       },
       {
@@ -159,7 +163,7 @@ export default async function handler(
     }
 
     // Reset monthly usage limit when subscribing to a new plan
-    if (isNewPlan && subscription.status === "active") {
+    if (subscription.status === "active") {
       try {
         const periodStart = getCurrentPeriodStart();
         const newLimit = getPlanCredits(planType);

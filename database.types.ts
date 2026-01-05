@@ -63,7 +63,7 @@ export interface Database {
       subscriptions: {
         Row: {
           user_id: string; // uuid, primary key, FOREIGN KEY references auth.users(id)
-          is_active: boolean; // default false
+          status: string | null; // text, one of 'active'/'unsubscribed'/'expired', nullable
           plan_type: string | null; // text, one of basic/pro/business
           stripe_subscription_id: string | null; // text
           stripe_customer_id: string | null; // text
@@ -73,7 +73,7 @@ export interface Database {
         };
         Insert: {
           user_id: string; // uuid, FOREIGN KEY references auth.users(id)
-          is_active?: boolean; // default false
+          status?: string | null; // text, one of 'active'/'unsubscribed', nullable
           plan_type?: string | null; // text
           stripe_subscription_id?: string | null; // text
           stripe_customer_id?: string | null; // text
@@ -83,7 +83,7 @@ export interface Database {
         };
         Update: {
           user_id?: string; // uuid, FOREIGN KEY references auth.users(id)
-          is_active?: boolean;
+          status?: string | null; // text, one of 'active'/'unsubscribed', nullable
           plan_type?: string | null; // text
           stripe_subscription_id?: string | null; // text
           stripe_customer_id?: string | null; // text

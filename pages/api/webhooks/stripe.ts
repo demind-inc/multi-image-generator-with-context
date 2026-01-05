@@ -57,6 +57,108 @@ export default async function handler(
 
     const event = req.body as Stripe.Event;
 
+    // Handle subscription updated event (for expiration checks)
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+
+      // Only process events where metadata.app = "nanogenai"
+      if (subscription.metadata?.app !== "nanogenai") {
+        console.log(
+          `Skipping subscription ${subscription.id} - app metadata is not "nanogenai"`
+        );
+        return res.json({ received: true });
+      }
+
+      // Find the subscription in database by stripe_subscription_id
+      const { data: dbSubscription, error: fetchError } = await supabase
+        .from("subscriptions")
+        .select("user_id, status, current_period_end")
+        .eq("stripe_subscription_id", subscription.id)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error(
+          "Failed to fetch subscription from database:",
+          fetchError
+        );
+        return res.status(500).json({
+          error: "Failed to fetch subscription from database",
+        });
+      }
+
+      if (!dbSubscription) {
+        console.warn(
+          `Subscription ${subscription.id} not found in database, skipping update`
+        );
+        return res.json({ received: true });
+      }
+
+      // Check if subscription has expired
+      const currentPeriodEnd = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null;
+      const now = new Date();
+      const periodEndDate = currentPeriodEnd
+        ? new Date(currentPeriodEnd)
+        : null;
+      const hasExpired = periodEndDate && now > periodEndDate;
+
+      // Determine the status to set
+      let newStatus: string | null = null;
+      if (subscription.status === "active") {
+        // If period has ended, mark as expired
+        if (hasExpired) {
+          newStatus = "expired";
+        } else {
+          newStatus = "active";
+        }
+      } else if (subscription.status === "canceled") {
+        newStatus = "unsubscribed";
+      }
+
+      // Update database if status needs to change
+      if (newStatus !== null && newStatus !== dbSubscription.status) {
+        const { error: updateError } = await supabase
+          .from("subscriptions")
+          .update({
+            status: newStatus,
+            current_period_end: currentPeriodEnd,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_subscription_id", subscription.id);
+
+        if (updateError) {
+          console.error(
+            "Failed to update subscription in database:",
+            updateError
+          );
+          return res.status(500).json({
+            error: "Failed to update subscription in database",
+          });
+        }
+
+        console.log(
+          `Subscription ${subscription.id} updated to status "${newStatus}" for user ${dbSubscription.user_id}`
+        );
+      } else if (currentPeriodEnd !== dbSubscription.current_period_end) {
+        // Update current_period_end even if status hasn't changed
+        const { error: updateError } = await supabase
+          .from("subscriptions")
+          .update({
+            current_period_end: currentPeriodEnd,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_subscription_id", subscription.id);
+
+        if (updateError) {
+          console.error(
+            "Failed to update subscription period end:",
+            updateError
+          );
+        }
+      }
+    }
+
     // Handle subscription deleted event
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
@@ -93,11 +195,11 @@ export default async function handler(
         return res.json({ received: true });
       }
 
-      // Update database to mark subscription as inactive
+      // Update database to mark subscription as unsubscribed
       const { error: updateError } = await supabase
         .from("subscriptions")
         .update({
-          is_active: false,
+          status: "unsubscribed",
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);

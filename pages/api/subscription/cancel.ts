@@ -59,26 +59,26 @@ export default async function handler(
     }
 
     if (!subscription.stripe_subscription_id) {
-      // No Stripe subscription ID, just deactivate in database
-      const { error: deactivateError } = await supabase
+      // No Stripe subscription ID, just update database
+      const { error: updateError } = await supabase
         .from("subscriptions")
         .update({
-          is_active: false,
+          status: "unsubscribed",
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
 
-      if (deactivateError) {
-        console.error("Failed to deactivate subscription:", deactivateError);
+      if (updateError) {
+        console.error("Failed to update subscription:", updateError);
         return res.status(500).json({
-          error: "Failed to deactivate subscription",
-          details: deactivateError.message,
+          error: "Failed to update subscription",
+          details: updateError.message,
         });
       }
 
       return res.json({
         success: true,
-        message: "Subscription deactivated successfully",
+        message: "Subscription canceled successfully",
       });
     }
 
@@ -106,11 +106,11 @@ export default async function handler(
       }
     }
 
-    // Update database to mark subscription as inactive
+    // Update database to mark subscription as unsubscribed
     const { error: updateError } = await supabase
       .from("subscriptions")
       .update({
-        is_active: false,
+        status: "unsubscribed",
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId);

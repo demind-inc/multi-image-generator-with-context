@@ -38,7 +38,7 @@ export async function getSubscription(
 
   return {
     userId: subscription.user_id,
-    isActive: subscription.is_active ?? false,
+    isActive: subscription.status === "active",
     stripeSubscriptionId: subscription.stripe_subscription_id,
     stripeCustomerId: subscription.stripe_customer_id,
     currentPeriodEnd: subscription.current_period_end,
@@ -65,7 +65,7 @@ export async function createOrUpdateSubscription(
     .upsert(
       {
         user_id: userId,
-        is_active: subscriptionData.isActive,
+        status: subscriptionData.isActive ? "active" : null,
         stripe_subscription_id: subscriptionData.stripeSubscriptionId || null,
         stripe_customer_id: subscriptionData.stripeCustomerId || null,
         current_period_end: subscriptionData.currentPeriodEnd || null,
@@ -97,7 +97,7 @@ export async function createOrUpdateSubscription(
 
   return {
     userId: subscription?.user_id,
-    isActive: subscription?.is_active ?? false,
+    isActive: subscription?.status === "active",
     stripeSubscriptionId: subscription.stripe_subscription_id,
     stripeCustomerId: subscription.stripe_customer_id,
     currentPeriodEnd: subscription.current_period_end,
@@ -123,6 +123,29 @@ export async function deactivateSubscription(
   return createOrUpdateSubscription(userId, {
     isActive: false,
   });
+}
+
+export async function unsubscribeSubscription(
+  userId: string
+): Promise<Subscription> {
+  const supabase = getSupabaseClient();
+
+  const { error } = await supabase
+    .from(SUBSCRIPTION_TABLE)
+    .update({
+      status: "unsubscribed",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    getSubscription(userId) ||
+    Promise.reject(new Error("Failed to get subscription"))
+  );
 }
 
 export async function cancelStripeSubscription(
