@@ -176,6 +176,10 @@ body {
     background: linear-gradient(135deg, #fb923c, #f97316);
     color: #ffffff;
     box-shadow: 0 8px 20px rgba(249, 115, 22, 0.2);
+
+    &-image {
+      width: 100%;
+    }
   }
 
   &__text {

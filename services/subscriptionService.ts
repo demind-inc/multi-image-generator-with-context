@@ -1,3 +1,4 @@
+import { Database } from "@/database.types";
 import { SubscriptionPlan } from "../types";
 import { getSupabaseClient } from "./supabaseClient";
 
@@ -9,9 +10,12 @@ export interface Subscription {
   stripeSubscriptionId?: string | null;
   stripeCustomerId?: string | null;
   currentPeriodEnd?: string | null;
+  expiredAt?: string | null;
+  unsubscribedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
   planType?: SubscriptionPlan | null;
+  status?: string | null;
 }
 
 export async function getSubscription(
@@ -32,16 +36,33 @@ export async function getSubscription(
   if (!data) {
     return null;
   }
+  const subscription =
+    data as Database["public"]["Tables"]["subscriptions"]["Row"];
+
+  // User has access if status is "active" or "unsubscribed" (until period ends)
+  // Check if period has ended for unsubscribed subscriptions
+  let isActive = subscription.status === "active";
+  if (
+    subscription.status === "unsubscribed" &&
+    subscription.current_period_end
+  ) {
+    const periodEnd = new Date(subscription.current_period_end);
+    const now = new Date();
+    isActive = now <= periodEnd; // Still active if period hasn't ended
+  }
 
   return {
-    userId: data.user_id,
-    isActive: data.is_active ?? false,
-    stripeSubscriptionId: data.stripe_subscription_id,
-    stripeCustomerId: data.stripe_customer_id,
-    currentPeriodEnd: data.current_period_end,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    planType: (data.plan_type as SubscriptionPlan | null) ?? null,
+    userId: subscription.user_id,
+    isActive,
+    stripeSubscriptionId: subscription.stripe_subscription_id,
+    stripeCustomerId: subscription.stripe_customer_id,
+    currentPeriodEnd: subscription.current_period_end,
+    expiredAt: subscription.expired_at,
+    unsubscribedAt: subscription.unsubscribed_at,
+    createdAt: subscription.created_at,
+    updatedAt: subscription.updated_at,
+    planType: (subscription.plan_type as SubscriptionPlan | null) ?? null,
+    status: subscription.status,
   };
 }
 
@@ -62,7 +83,7 @@ export async function createOrUpdateSubscription(
     .upsert(
       {
         user_id: userId,
-        is_active: subscriptionData.isActive,
+        status: subscriptionData.isActive ? "active" : null,
         stripe_subscription_id: subscriptionData.stripeSubscriptionId || null,
         stripe_customer_id: subscriptionData.stripeCustomerId || null,
         current_period_end: subscriptionData.currentPeriodEnd || null,
@@ -89,16 +110,21 @@ export async function createOrUpdateSubscription(
     // If still no data, throw an error
     throw new Error("Failed to create or retrieve subscription");
   }
+  const subscription =
+    data as Database["public"]["Tables"]["subscriptions"]["Row"];
 
   return {
-    userId: data.user_id,
-    isActive: data.is_active ?? false,
-    stripeSubscriptionId: data.stripe_subscription_id,
-    stripeCustomerId: data.stripe_customer_id,
-    currentPeriodEnd: data.current_period_end,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    planType: (data.plan_type as SubscriptionPlan | null) ?? null,
+    userId: subscription?.user_id,
+    isActive: subscription?.status === "active",
+    stripeSubscriptionId: subscription.stripe_subscription_id,
+    stripeCustomerId: subscription.stripe_customer_id,
+    currentPeriodEnd: subscription.current_period_end,
+    expiredAt: subscription?.expired_at,
+    unsubscribedAt: subscription?.unsubscribed_at,
+    createdAt: subscription.created_at,
+    updatedAt: subscription.updated_at,
+    planType: (subscription?.plan_type as SubscriptionPlan | null) ?? null,
+    status: subscription?.status,
   };
 }
 
@@ -118,6 +144,30 @@ export async function deactivateSubscription(
   return createOrUpdateSubscription(userId, {
     isActive: false,
   });
+}
+
+export async function unsubscribeSubscription(
+  userId: string
+): Promise<Subscription> {
+  const supabase = getSupabaseClient();
+
+  const { error } = await (supabase.from(SUBSCRIPTION_TABLE) as any)
+    .update({
+      status: "unsubscribed",
+      unsubscribed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  const updatedSubscription = await getSubscription(userId);
+  if (!updatedSubscription) {
+    throw new Error("Failed to get subscription after unsubscribe");
+  }
+  return updatedSubscription;
 }
 
 export async function cancelStripeSubscription(

@@ -1,6 +1,6 @@
 import React from "react";
 import { AppMode, ImageSize } from "../../types";
-import "./Hero.scss";
+import styles from "./Hero.module.scss";
 
 interface HeroProps {
   referencesCount: number;
@@ -34,17 +34,17 @@ const Hero: React.FC<HeroProps> = ({
   freeCreditsRemaining,
 }) => {
   return (
-    <section className="hero card card--gradient">
-      <div className="hero__left">
+    <section className={`${styles.hero} card card--gradient`}>
+      <div className={styles["hero__left"]}>
         <div className="pill pill--glow">New • Brighter workspace</div>
-        <h2 className="hero__title">
+        <h2 className={styles["hero__title"]}>
           Design-grade layouts without the design gruntwork.
         </h2>
-        <p className="hero__subtitle">
+        <p className={styles["hero__subtitle"]}>
           Blend storyboard prompts, character references, and high-res rendering
           in one streamlined surface inspired by modern creative tools.
         </p>
-        <div className="hero__cta">
+        <div className={styles["hero__cta"]}>
           <button
             onClick={onUploadClick}
             className="primary-button primary-button--ghost"
@@ -60,19 +60,19 @@ const Hero: React.FC<HeroProps> = ({
           </button>
         </div>
       </div>
-      <div className="hero__right">
-        <div className="metric-tile">
-          <p className="metric-tile__label">Identity lock</p>
-          <p className="metric-tile__value">
+      <div className={styles["hero__right"]}>
+        <div className={styles["metric-tile"]}>
+          <p className={styles["metric-tile__label"]}>Identity lock</p>
+          <p className={styles["metric-tile__value"]}>
             {referencesCount > 0 ? "Ready" : "Pending"}
           </p>
-          <p className="metric-tile__hint">
+          <p className={styles["metric-tile__hint"]}>
             {referencesCount > 0 ? "Consistency secured" : "Add 1-3 portraits"}
           </p>
         </div>
-        <div className="metric-row">
-          <div className="metric-card">
-            <p className="metric-card__value">
+        <div className={styles["metric-row"]}>
+          <div className={styles["metric-card"]}>
+            <p className={styles["metric-card__value"]}>
               {isUsageLoading
                 ? "..."
                 : isSubscribed
@@ -83,23 +83,23 @@ const Hero: React.FC<HeroProps> = ({
                 ? `${freeCreditsRemaining}/3`
                 : "3"}
             </p>
-            <p className="metric-card__label">
+            <p className={styles["metric-card__label"]}>
               {isSubscribed ? "Credits left" : "Free credits"}
             </p>
           </div>
-          <div className="metric-card">
-            <p className="metric-card__value">{generatedCount}</p>
-            <p className="metric-card__label">Rendered scenes</p>
+          <div className={styles["metric-card"]}>
+            <p className={styles["metric-card__value"]}>{generatedCount}</p>
+            <p className={styles["metric-card__label"]}>Rendered scenes</p>
           </div>
-          <div className="metric-card">
-            <p className="metric-card__value">{size}</p>
-            <p className="metric-card__label">Resolution</p>
+          <div className={styles["metric-card"]}>
+            <p className={styles["metric-card__value"]}>{size}</p>
+            <p className={styles["metric-card__label"]}>Resolution</p>
           </div>
-          <div className="metric-card">
-            <p className="metric-card__value">
+          <div className={styles["metric-card"]}>
+            <p className={styles["metric-card__value"]}>
               {mode === "slideshow" ? "Auto" : "Manual"}
             </p>
-            <p className="metric-card__label">Mode</p>
+            <p className={styles["metric-card__label"]}>Mode</p>
           </div>
         </div>
       </div>

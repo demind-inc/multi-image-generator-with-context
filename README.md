@@ -123,22 +123,156 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
 
    ```
 
-4. Connect Stripe subscription checkout links per plan:
+4. Configure Stripe for subscription checkout:
 
    ```bash
+   # Stripe API Keys
+   STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
+   STRIPE_WEBHOOK_SECRET=whsec_... (optional, but recommended for production)
+
+   # Stripe Price IDs (required for Checkout Sessions API)
+   # Get these from Stripe Dashboard → Products → select product → select price → Price ID (starts with price_)
+   STRIPE_PRICE_ID_BASIC=price_xxxxx
+   STRIPE_PRICE_ID_PRO=price_xxxxx
+   STRIPE_PRICE_ID_BUSINESS=price_xxxxx
+
+   # Optional: Base URL for checkout redirects (defaults to VERCEL_URL or localhost:3000)
+   NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+
+   # Legacy: Payment Links (optional, used as fallback if Price IDs not set)
    STRIPE_LINK_BASIC=https://buy.stripe.com/basic_payment_link
    STRIPE_LINK_PRO=https://buy.stripe.com/pro_payment_link
    STRIPE_LINK_BUSINESS=https://buy.stripe.com/business_payment_link
-   STRIPE_SECRET_KEY=SECRET_KEY
    ```
 
-   Create Stripe Payment Links for each plan price and drop them into these env vars. The paywall modal will pick the correct link based on the selected plan. If you include `?paid=true` or `?session_id=...` in your return URL, the dashboard will automatically activate the subscription in the database.
+   **Getting Stripe Price IDs:**
 
-5. Run the app:
+   1. Go to [Stripe Dashboard](https://dashboard.stripe.com) → Products
+   2. Select your product (or create one for each plan: Basic, Pro, Business)
+   3. Click on the price you want to use
+   4. Copy the Price ID (starts with `price_`)
+   5. Add it to the corresponding environment variable
+
+   The app uses Stripe Checkout Sessions API to create payment links dynamically with metadata. The subscription redirect page will automatically sync the subscription data from Stripe and activate it.
+
+5. **Backend Server Configuration (Next.js API Routes):**
+
+   The app uses Next.js API routes (automatically deployed as Vercel serverless functions). The backend handles:
+
+   - Creating Stripe Checkout Sessions (`/api/subscription/checkout`)
+   - Syncing subscription data after payment (`/api/subscription/sync`)
+   - Canceling subscriptions (`/api/subscription/cancel`)
+   - Stripe webhook events (`/api/webhooks/stripe`) - for ongoing subscription events
+   - Health check endpoint (`/api/health`)
+
+   **Environment Variables for Backend (set in Vercel Dashboard):**
+
    ```bash
+   # Supabase
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ROLE_KEY=your_supabase_service_role_key  # Required for backend operations
+
+   # Stripe
+   STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
+   STRIPE_WEBHOOK_SECRET=whsec_... (get from Stripe Dashboard → Webhooks)
+   STRIPE_PRICE_ID_BASIC=price_xxxxx
+   STRIPE_PRICE_ID_PRO=price_xxxxx
+   STRIPE_PRICE_ID_BUSINESS=price_xxxxx
+   STRIPE_WEBHOOK_SECRET=xxxxx
+
+   # Optional
+   NEXT_PUBLIC_BASE_URL=https://yourdomain.com  # For checkout redirect URLs
+   ```
+
+   **Setting up Stripe Webhook:**
+
+   1. Go to your Stripe Dashboard → Developers → Webhooks
+   2. Click "Add endpoint"
+   3. Set the endpoint URL to: `https://yourdomain.com/api/webhooks/stripe`
+   4. Select the following events to listen to:
+      - `checkout.session.completed`
+      - `customer.subscription.updated`
+      - `customer.subscription.deleted`
+      - `invoice.payment_succeeded`
+      - `invoice.payment_failed`
+   5. Copy the webhook signing secret and add it to `STRIPE_WEBHOOK_SECRET` in Vercel
+
+   **Note:** The backend uses Supabase Service Role Key (not the anon key) to bypass RLS and update subscriptions. Make sure to set `SUPABASE_SERVICE_ROLE_KEY` in your Vercel environment variables.
+
+6. **Deploy to Vercel:**
+
+   The project is now a Next.js application with API routes. Vercel has first-class support for Next.js!
+
+   **Option 1: Using Vercel CLI**
+
+   ```bash
+   # Install Vercel CLI globally
+   npm i -g vercel
+
+   # Login to Vercel
+   vercel login
+
+   # Deploy (follow the prompts)
+   vercel
+
+   # Deploy to production
+   vercel --prod
+   ```
+
+   **Option 2: Using Vercel Dashboard**
+
+   1. Push your code to GitHub/GitLab/Bitbucket
+   2. Go to [vercel.com](https://vercel.com) and sign in
+   3. Click "New Project"
+   4. Import your repository
+   5. Vercel will automatically detect it's a Next.js project
+   6. Configure environment variables (see below)
+   7. Click "Deploy"
+
+   **Note**: Vercel automatically detects Next.js and configures everything. No additional setup needed!
+
+   **Required Environment Variables in Vercel:**
+
+   Set these in your Vercel project settings (Settings → Environment Variables):
+
+   ```bash
+   # Frontend (for build)
+   GEMINI_API_KEY=your_gemini_api_key
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_BASE_URL=https://yourdomain.com  # Optional, for checkout redirects
+
+   # Backend API (for serverless functions)
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
+   STRIPE_WEBHOOK_SECRET=whsec_... (optional but recommended)
+   STRIPE_PRICE_ID_BASIC=price_xxxxx
+   STRIPE_PRICE_ID_PRO=price_xxxxx
+   STRIPE_PRICE_ID_BUSINESS=price_xxxxx
+
+   # Legacy: Payment Links (optional, used as fallback)
+   STRIPE_LINK_BASIC=https://buy.stripe.com/basic_payment_link
+   STRIPE_LINK_PRO=https://buy.stripe.com/pro_payment_link
+   STRIPE_LINK_BUSINESS=https://buy.stripe.com/business_payment_link
+   ```
+
+   **Important Notes:**
+
+   - The `/pages/api` directory contains Next.js API routes that Vercel will automatically deploy as serverless functions
+   - API routes are available at: `https://yourdomain.com/api/*`
+   - Make sure to set environment variables for both Production and Preview environments if needed
+   - Next.js API routes automatically use Node.js runtime on Vercel
+
+7. Run the app locally:
+   ```bash
+   npm install
    npm run dev
    # or
+   yarn install
    yarn dev
    ```
 
 The app will be available at `http://localhost:3300`
+
+**Note**: This project has been migrated from Vite to Next.js. See `MIGRATION.md` for details about the changes.

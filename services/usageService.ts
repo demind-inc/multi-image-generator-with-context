@@ -144,3 +144,63 @@ export async function recordGeneration(
 
   return normalizeUsage(data, currentUsage.monthlyLimit);
 }
+
+/**
+ * Resets the monthly usage limit for the current month when subscribing to a new plan.
+ * This sets used to 0 and updates monthly_limit to match the new plan's credits.
+ */
+export async function resetMonthlyUsageForNewPlan(
+  userId: string,
+  planType: SubscriptionPlan
+): Promise<MonthlyUsage> {
+  const supabase = getSupabaseClient();
+  const periodStart = getCurrentPeriodStart();
+  const newLimit = getPlanCredits(planType);
+
+  // Upsert the usage record with used=0 and the new monthly_limit
+  const { data, error } = await supabase
+    .from(USAGE_TABLE)
+    .upsert({
+      user_id: userId,
+      period_start: periodStart,
+      used: 0,
+      monthly_limit: newLimit,
+    } as any)
+    .select("user_id, period_start, used, monthly_limit")
+    .single();
+
+  if (error) {
+    // If upsert returns no rows (PGRST116), try to fetch the record
+    if (error.code === "PGRST116") {
+      // Record might have been created but not returned, fetch it
+      const { data: fetchedData, error: fetchError } = await supabase
+        .from(USAGE_TABLE)
+        .select("user_id, period_start, used, monthly_limit")
+        .eq("user_id", userId)
+        .eq("period_start", periodStart)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      if (fetchedData) {
+        return normalizeUsage(fetchedData, newLimit);
+      }
+    }
+    throw error;
+  }
+
+  if (!data) {
+    // Fallback if data is null
+    return {
+      userId,
+      periodStart,
+      used: 0,
+      monthlyLimit: newLimit,
+      remaining: newLimit,
+    };
+  }
+
+  return normalizeUsage(data, newLimit);
+}

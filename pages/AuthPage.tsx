@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 import { useAuth } from "../providers/AuthProvider";
 import AuthShell from "../components/AuthShell/AuthShell";
 import { useEffect } from "react";
@@ -19,14 +19,14 @@ const AuthPage: React.FC = () => {
     signIn,
     signUp,
   } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (authStatus === "signed_in") {
-      navigate("/dashboard", { replace: true });
+      router.replace("/dashboard");
     }
-  }, [authStatus, navigate]);
+  }, [authStatus, router]);
 
   // Show loading state while checking auth
   if (authStatus === "checking") {

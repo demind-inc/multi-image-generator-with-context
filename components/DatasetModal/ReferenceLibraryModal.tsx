@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ReferenceSet } from "../../types";
-import "./DatasetModal.scss";
+import styles from "./DatasetModal.module.scss";
 
 interface ReferenceLibraryModalProps {
   isOpen: boolean;
@@ -63,43 +63,47 @@ const ReferenceLibraryModal: React.FC<ReferenceLibraryModalProps> = ({
 
   return (
     <div
-      className="dataset-modal__backdrop"
+      className={styles["dataset-modal__backdrop"]}
       role="dialog"
       aria-modal="true"
       aria-label="Reference library"
       onClick={handleBackdropClick}
     >
-      <div className="dataset-modal">
-        <div className="dataset-modal__header">
+      <div className={styles["dataset-modal"]}>
+        <div className={styles["dataset-modal__header"]}>
           <div>
-            <p className="dataset-modal__eyebrow">Reference library</p>
-            <h3 className="dataset-modal__title">Pick saved images</h3>
-            <p className="dataset-modal__subtitle">
+            <p className={styles["dataset-modal__eyebrow"]}>
+              Reference library
+            </p>
+            <h3 className={styles["dataset-modal__title"]}>
+              Pick saved images
+            </h3>
+            <p className={styles["dataset-modal__subtitle"]}>
               Reuse your stored character shots to keep scenes consistent.
             </p>
           </div>
-          <button className="dataset-modal__close" onClick={onClose}>
+          <button className={styles["dataset-modal__close"]} onClick={onClose}>
             ×
           </button>
         </div>
 
         {isLoading ? (
-          <div className="dataset-modal__empty">
-            <div className="dataset-modal__spinner" />
+          <div className={styles["dataset-modal__empty"]}>
+            <div className={styles["dataset-modal__spinner"]} />
             <p className="text text--helper" style={{ margin: 0 }}>
               Loading your references...
             </p>
           </div>
         ) : items.length === 0 ? (
-          <div className="dataset-modal__empty">
-            <div className="dataset-modal__empty-icon">📁</div>
+          <div className={styles["dataset-modal__empty"]}>
+            <div className={styles["dataset-modal__empty-icon"]}>📁</div>
             <p>No saved references yet</p>
             <p className="text text--helper" style={{ margin: 0 }}>
               Save your current uploads to quickly reuse them later.
             </p>
           </div>
         ) : (
-          <div className="dataset-modal__grid custom-scrollbar">
+          <div className={`${styles["dataset-modal__grid"]} custom-scrollbar`}>
             {items.map((set) => {
               const isSelected = selectedSetIds.has(set.setId);
               const firstImage = set.images[0];
@@ -107,10 +111,12 @@ const ReferenceLibraryModal: React.FC<ReferenceLibraryModalProps> = ({
               return (
                 <button
                   key={set.setId}
-                  className={`dataset-card ${isSelected ? "is-selected" : ""}`}
+                  className={`${styles["dataset-card"]} ${
+                    isSelected ? styles["is-selected"] : ""
+                  }`}
                   onClick={() => toggleSelection(set.setId)}
                 >
-                  <div className="dataset-card__thumb">
+                  <div className={styles["dataset-card__thumb"]}>
                     {firstImage && (
                       <img
                         src={firstImage.url}
@@ -128,18 +134,20 @@ const ReferenceLibraryModal: React.FC<ReferenceLibraryModalProps> = ({
                       />
                     )}
                     {imageCount > 1 && (
-                      <div className="dataset-card__badge">{imageCount}</div>
+                      <div className={styles["dataset-card__badge"]}>
+                        {imageCount}
+                      </div>
                     )}
-                    <span className="dataset-card__check">
+                    <span className={styles["dataset-card__check"]}>
                       {isSelected ? "✓" : "+"}
                     </span>
                   </div>
-                  <div className="dataset-card__meta">
-                    <div className="dataset-card__title">
+                  <div className={styles["dataset-card__meta"]}>
+                    <div className={styles["dataset-card__title"]}>
                       {set.label || "Untitled reference set"}
                     </div>
                     {set.createdAt && (
-                      <div className="dataset-card__date">
+                      <div className={styles["dataset-card__date"]}>
                         {new Date(set.createdAt).toLocaleString()}
                         {imageCount > 1 && ` • ${imageCount} images`}
                       </div>
@@ -151,7 +159,7 @@ const ReferenceLibraryModal: React.FC<ReferenceLibraryModalProps> = ({
           </div>
         )}
 
-        <div className="dataset-modal__footer">
+        <div className={styles["dataset-modal__footer"]}>
           <button
             className="primary-button"
             onClick={handleApply}

@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { AppMode } from "../../types";
 import Footer from "../Footer/Footer";
-import "./Sidebar.scss";
+import styles from "./Sidebar.module.scss";
 
 export type PanelKey = "saved" | "references" | "storyboard" | "manual";
+
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const day = date.getDate();
+  return `${year} ${month} ${day}`;
+};
 
 interface SidebarProps {
   mode: AppMode;
@@ -18,6 +26,9 @@ interface SidebarProps {
   planType?: string;
   remainingCredits?: number;
   totalCredits?: number;
+  expiredAt?: string | null;
+  unsubscribedAt?: string | null;
+  subscriptionStatus?: string | null;
   onOpenBilling?: () => void;
   onCancelSubscription?: () => void;
   onSignOut: () => void;
@@ -36,6 +47,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   planType,
   remainingCredits,
   totalCredits,
+  expiredAt,
+  unsubscribedAt,
+  subscriptionStatus,
   onOpenBilling,
   onCancelSubscription,
   onSignOut,
@@ -63,8 +77,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [isAccountMenuOpen]);
 
   return (
-    <div className="sidebar custom-scrollbar">
-      <div className="sidebar__header">
+    <div className={`${styles.sidebar} custom-scrollbar`}>
+      <div className={styles["sidebar__header"]}>
         <div className="brand brand--compact">
           <div className="brand__icon">
             <img
@@ -78,10 +92,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             <h3 className="brand__title">NanoGen AI</h3>
           </div>
         </div>
-        <div className="sidebar__header-actions">
-          <div className="sidebar__profile" ref={accountMenuRef}>
+        <div className={styles["sidebar__header-actions"]}>
+          <div className={styles["sidebar__profile"]} ref={accountMenuRef}>
             <button
-              className="sidebar__profile-btn"
+              className={styles["sidebar__profile-btn"]}
               onClick={() => setIsAccountMenuOpen((prev) => !prev)}
               title="Account"
             >
@@ -102,30 +116,48 @@ const Sidebar: React.FC<SidebarProps> = ({
               </svg>
             </button>
             {isAccountMenuOpen && (
-              <div className="sidebar__profile-menu">
-                <div className="sidebar__profile-email">{displayEmail}</div>
-                <div className="sidebar__profile-sub">
-                  <p className="sidebar__profile-label">
+              <div className={styles["sidebar__profile-menu"]}>
+                <div className={styles["sidebar__profile-email"]}>
+                  {displayEmail}
+                </div>
+                <div className={styles["sidebar__profile-sub"]}>
+                  <p className={styles["sidebar__profile-label"]}>
                     {subscriptionLabel ||
                       (isSubscribed ? "Subscribed" : "Free")}
                   </p>
-                  <p className="sidebar__profile-meta">
+                  <p className={styles["sidebar__profile-meta"]}>
                     {isSubscribed
                       ? subscriptionPrice || "Active"
                       : "3 credits included"}
                   </p>
-                  <div className="sidebar__profile-actions">
-                    {isSubscribed ? (
+                  {isSubscribed && expiredAt && (
+                    <p
+                      className={styles["sidebar__profile-meta"]}
+                      style={{ fontSize: "0.75rem", color: "#ff6b6b" }}
+                    >
+                      Expired: {formatDate(expiredAt)}
+                    </p>
+                  )}
+                  {isSubscribed && unsubscribedAt && (
+                    <p
+                      className={styles["sidebar__profile-meta"]}
+                      style={{ fontSize: "0.75rem", color: "#ffa500" }}
+                    >
+                      Unsubscribed: {formatDate(unsubscribedAt)}
+                    </p>
+                  )}
+                  <div className={styles["sidebar__profile-actions"]}>
+                    {isSubscribed && subscriptionStatus !== "unsubscribed" ? (
                       <button onClick={onCancelSubscription}>
                         Cancel subscription
                       </button>
-                    ) : (
+                    ) : !isSubscribed ? (
                       <button onClick={onOpenBilling}>Upgrade</button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
                 <button
-                  className="sidebar__profile-signout"
+                  className={styles["sidebar__profile-signout"]}
                   onClick={onSignOut}
                 >
                   Sign out
@@ -136,12 +168,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className="sidebar__section">
-        <p className="sidebar__eyebrow">Mode</p>
-        <div className="sidebar__mode-toggle">
+      <div className={styles["sidebar__section"]}>
+        <p className={styles["sidebar__eyebrow"]}>Mode</p>
+        <div className={styles["sidebar__mode-toggle"]}>
           <button
-            className={`sidebar__mode-link ${
-              mode === "manual" && activePanel === "manual" ? "is-active" : ""
+            className={`${styles["sidebar__mode-link"]} ${
+              mode === "manual" && activePanel === "manual"
+                ? styles["is-active"]
+                : ""
             }`}
             onClick={() => {
               onModeChange("manual");
@@ -151,9 +185,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             Multi image generation
           </button>
           <button
-            className={`sidebar__mode-link ${
+            className={`${styles["sidebar__mode-link"]} ${
               mode === "slideshow" && activePanel === "storyboard"
-                ? "is-active"
+                ? styles["is-active"]
                 : ""
             }`}
             onClick={() => {
@@ -166,20 +200,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className="sidebar__section">
-        <p className="sidebar__eyebrow">Saved</p>
-        <nav className="sidebar__nav">
+      <div className={styles["sidebar__section"]}>
+        <p className={styles["sidebar__eyebrow"]}>Saved</p>
+        <nav className={styles["sidebar__nav"]}>
           <button
-            className={`sidebar__nav-item ${
-              activePanel === "saved" ? "is-active" : ""
+            className={`${styles["sidebar__nav-item"]} ${
+              activePanel === "saved" ? styles["is-active"] : ""
             }`}
             onClick={() => onPanelChange("saved")}
           >
             Images
           </button>
           <button
-            className={`sidebar__nav-item ${
-              activePanel === "references" ? "is-active" : ""
+            className={`${styles["sidebar__nav-item"]} ${
+              activePanel === "references" ? styles["is-active"] : ""
             }`}
             onClick={() => onPanelChange("references")}
           >
@@ -188,17 +222,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      <div className="sidebar__footer">
-        <div className="sidebar__plan-info">
-          <div className="sidebar__plan-row">
-            <span className="sidebar__plan-label">Plan</span>
-            <span className="sidebar__plan-value">
+      <div className={styles["sidebar__footer"]}>
+        <div className={styles["sidebar__plan-info"]}>
+          <div className={styles["sidebar__plan-row"]}>
+            <span className={styles["sidebar__plan-label"]}>Plan</span>
+            <span className={styles["sidebar__plan-value"]}>
               {isSubscribed && planType ? planType.toUpperCase() : "Free"}
             </span>
           </div>
-          <div className="sidebar__plan-row">
-            <span className="sidebar__plan-label">Credits</span>
-            <span className="sidebar__plan-value">
+          <div className={styles["sidebar__plan-row"]}>
+            <span className={styles["sidebar__plan-label"]}>Credits</span>
+            <span className={styles["sidebar__plan-value"]}>
               {isSubscribed
                 ? remainingCredits !== undefined && totalCredits !== undefined
                   ? `${remainingCredits}/${totalCredits}`
@@ -210,13 +244,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
         {!isSubscribed && onOpenBilling && (
-          <button className="sidebar__upgrade-btn" onClick={onOpenBilling}>
+          <button
+            className={styles["sidebar__upgrade-btn"]}
+            onClick={onOpenBilling}
+          >
             Upgrade
           </button>
         )}
       </div>
 
-      <div className="sidebar__footer-section">
+      <div className={styles["sidebar__footer-section"]}>
         <Footer />
       </div>
     </div>

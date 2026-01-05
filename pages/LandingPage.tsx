@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 import { useAuth } from "../providers/AuthProvider";
 import { SubscriptionPlan } from "../types";
 import AuthShell from "../components/AuthShell/AuthShell";
-import "./LandingPage.scss";
 
 const referenceImage = {
   src: "/assets/showcase/reference.png",
@@ -127,7 +126,7 @@ const pricingPlans = [
 ];
 
 const LandingPage: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const {
     authStatus,
     authEmail,
@@ -155,7 +154,7 @@ const LandingPage: React.FC = () => {
 
   const handleStart = () => {
     if (authStatus === "signed_in") {
-      navigate("/dashboard");
+      router.push("/dashboard");
       return;
     }
     setShowAuthModal(true);
@@ -167,7 +166,7 @@ const LandingPage: React.FC = () => {
       window.localStorage.setItem("start_payment_flow", "1");
     }
     if (authStatus === "signed_in") {
-      navigate(`/dashboard?plan=${plan}&openPayment=1`);
+      router.push(`/dashboard?plan=${plan}&openPayment=1`);
       return;
     }
     setShowAuthModal(true);
@@ -240,7 +239,7 @@ const LandingPage: React.FC = () => {
             className="landing__link"
             onClick={() =>
               authStatus === "signed_in"
-                ? navigate("/dashboard")
+                ? router.replace("/dashboard")
                 : setShowAuthModal(true)
             }
           >

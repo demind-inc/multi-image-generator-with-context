@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
+import styles from "./DashboardPage.module.scss";
 import {
   AppMode,
   ImageSize,
@@ -21,15 +22,10 @@ import {
   getMonthlyUsage,
   recordGeneration,
 } from "../services/usageService";
-import {
-  getSubscription,
-  activateSubscription,
-  deactivateSubscription,
-  cancelStripeSubscription,
-} from "../services/subscriptionService";
+import { getSubscription } from "../services/subscriptionService";
 import {
   getHasGeneratedFreeImage,
-  setHasGeneratedFreeImage,
+  setHasGeneratedFreeImage as setHasGeneratedFreeImageInDB,
 } from "../services/authService";
 import {
   fetchPromptLibrary,
@@ -122,7 +118,7 @@ const NameCaptureModal: React.FC<NameCaptureModalProps> = ({
 
 const DashboardPage: React.FC = () => {
   const { session, authStatus, displayEmail, signOut } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const FREE_CREDIT_CAP = 3;
   const PLAN_PRICE_LABEL: Record<SubscriptionPlan, string> = {
@@ -175,19 +171,50 @@ const DashboardPage: React.FC = () => {
   }>({ type: null, defaultValue: "" });
   const [librarySort, setLibrarySort] = useState<"newest" | "oldest">("newest");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const stripePlanLinks: Partial<Record<SubscriptionPlan, string>> = {
-    basic: import.meta.env.STRIPE_LINK_BASIC || process.env.STRIPE_LINK_BASIC,
-    pro: import.meta.env.STRIPE_LINK_PRO || process.env.STRIPE_LINK_PRO,
-    business:
-      import.meta.env.STRIPE_LINK_BUSINESS || process.env.STRIPE_LINK_BUSINESS,
+
+  // Build payment links with client_reference_id (user_id) as query parameter
+  const getStripePlanLinks = (): Partial<Record<SubscriptionPlan, string>> => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      return {
+        basic: process.env.STRIPE_LINK_BASIC || "",
+        pro: process.env.STRIPE_LINK_PRO || "",
+        business: process.env.STRIPE_LINK_BUSINESS || "",
+      };
+    }
+
+    const baseLinks = {
+      basic: process.env.STRIPE_LINK_BASIC || "",
+      pro: process.env.STRIPE_LINK_PRO || "",
+      business: process.env.STRIPE_LINK_BUSINESS || "",
+    };
+
+    // Add client_reference_id to each payment link
+    const links: Partial<Record<SubscriptionPlan, string>> = {};
+    for (const [plan, baseUrl] of Object.entries(baseLinks)) {
+      if (baseUrl) {
+        try {
+          const url = new URL(baseUrl);
+          url.searchParams.set("client_reference_id", userId);
+          links[plan as SubscriptionPlan] = url.toString();
+        } catch (error) {
+          // If URL is invalid, use base URL as-is
+          console.warn(`Invalid Stripe payment link URL for ${plan}:`, baseUrl);
+          links[plan as SubscriptionPlan] = baseUrl;
+        }
+      }
+    }
+    return links;
   };
+
+  const stripePlanLinks = getStripePlanLinks();
 
   // Redirect to auth page if not authenticated
   useEffect(() => {
     if (authStatus === "signed_out") {
-      navigate("/auth", { replace: true });
+      router.replace("/auth");
     }
-  }, [authStatus, navigate]);
+  }, [authStatus, router]);
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -244,11 +271,17 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  const [subscription, setSubscription] = React.useState<Awaited<ReturnType<typeof getSubscription>>>(null);
+
   const refreshSubscription = async (userId: string) => {
     setIsSubscriptionLoading(true);
     try {
       const subscription = await getSubscription(userId);
-      setIsPaymentUnlocked(subscription?.isActive ?? false);
+      setSubscription(subscription);
+      // User has access if subscription is active OR unsubscribed (until period ends)
+      const hasAccess = subscription?.isActive ?? false;
+      setIsPaymentUnlocked(hasAccess);
+      // Keep plan type if subscription exists (even if unsubscribed, they still have access)
       if (subscription?.planType) {
         setPlanType(subscription.planType);
         setPlanLockedFromSubscription(true);
@@ -258,6 +291,7 @@ const DashboardPage: React.FC = () => {
       setStripeSubscriptionId(subscription?.stripeSubscriptionId);
     } catch (error) {
       console.error("Failed to fetch subscription:", error);
+      setSubscription(null);
       setIsPaymentUnlocked(false);
       setPlanLockedFromSubscription(false);
       setStripeSubscriptionId(null);
@@ -319,38 +353,10 @@ const DashboardPage: React.FC = () => {
   }, [planType]);
 
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      isPaymentUnlocked ||
-      !session?.user?.id
-    )
-      return;
+    if (typeof window === "undefined" || !session?.user?.id) return;
     const params = new URLSearchParams(window.location.search);
-    const paidFlag =
-      params.get("paid") === "1" ||
-      params.get("paid") === "true" ||
-      params.get("session_id");
     const openPaymentFlag =
       params.get("openPayment") === "1" || params.get("openPayment") === "true";
-
-    if (paidFlag) {
-      const activateSubscriptionStatus = async () => {
-        try {
-          await activateSubscription(session.user.id, planType);
-          setIsPaymentUnlocked(true);
-          params.delete("paid");
-          params.delete("session_id");
-          const newSearch = params.toString();
-          const newUrl = `${window.location.pathname}${
-            newSearch ? `?${newSearch}` : ""
-          }`;
-          window.history.replaceState(null, "", newUrl);
-        } catch (error) {
-          console.error("Failed to activate subscription:", error);
-        }
-      };
-      activateSubscriptionStatus();
-    }
 
     if (openPaymentFlag && !isPaymentUnlocked) {
       setIsPaymentModalOpen(true);
@@ -361,7 +367,7 @@ const DashboardPage: React.FC = () => {
       }`;
       window.history.replaceState(null, "", newUrl);
     }
-  }, [isPaymentUnlocked, session?.user?.id, planType]);
+  }, [isPaymentUnlocked, session?.user?.id]);
 
   // All hooks must be called before any conditional returns
   const sortedPrompts = useMemo(() => {
@@ -631,7 +637,7 @@ const DashboardPage: React.FC = () => {
     const userId = session?.user?.id;
     if (!hasGeneratedFreeImage && userId) {
       try {
-        await setHasGeneratedFreeImage(userId, true);
+        await setHasGeneratedFreeImageInDB(userId, true);
         setHasGeneratedFreeImage(true);
       } catch (error) {
         console.error("Failed to update has_generated_free_image:", error);
@@ -995,20 +1001,56 @@ const DashboardPage: React.FC = () => {
               hasSubscription ? displayUsageRemaining : freeCreditsRemaining
             }
             totalCredits={hasSubscription ? displayUsageLimit : undefined}
+            expiredAt={subscription?.expiredAt || null}
+            unsubscribedAt={subscription?.unsubscribedAt || null}
+            subscriptionStatus={subscription?.status || null}
             onOpenBilling={() => setIsPaymentModalOpen(true)}
             onCancelSubscription={async () => {
               const userId = session?.user?.id;
               if (!userId) return;
+
+              // Confirm cancellation
+              if (
+                !confirm(
+                  "Are you sure you want to cancel your subscription? You'll lose access at the end of your billing period."
+                )
+              ) {
+                return;
+              }
+
               try {
-                await cancelStripeSubscription(stripeSubscriptionId);
-                await deactivateSubscription(userId);
+                const response = await fetch("/api/subscription/cancel", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ userId }),
+                });
+
+                if (!response.ok) {
+                  const error = await response.json();
+                  throw new Error(
+                    error.error || "Failed to cancel subscription"
+                  );
+                }
+
+                const result = await response.json();
+
+                // Update local state
                 setIsPaymentUnlocked(false);
                 setPlanLockedFromSubscription(false);
                 setPlanType("basic");
                 await refreshUsage(userId);
+                await refreshSubscription(userId);
+
+                alert(result.message || "Subscription canceled successfully");
               } catch (error) {
                 console.error("Failed to cancel subscription:", error);
-                alert("Could not cancel subscription. Please try again.");
+                alert(
+                  error instanceof Error
+                    ? error.message
+                    : "Could not cancel subscription. Please try again."
+                );
               }
             }}
             onSignOut={signOut}
@@ -1134,12 +1176,12 @@ const DashboardPage: React.FC = () => {
                 {references.length === 0 ? (
                   <div
                     onClick={triggerUpload}
-                    className="references__placeholder"
+                    className={styles["references__placeholder"]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
+                      width="32"
+                      height="32"
                       fill="none"
                       viewBox="0 0 24 24"
                     >
@@ -1154,13 +1196,13 @@ const DashboardPage: React.FC = () => {
                     <div>Add Character Images</div>
                   </div>
                 ) : (
-                  <div className="references__grid">
+                  <div className={styles["references__grid"]}>
                     {references.map((ref) => (
-                      <div key={ref.id} className="reference-thumb">
+                      <div key={ref.id} className={styles["reference-thumb"]}>
                         <img src={ref.data} alt="Reference" />
                         <button
                           onClick={() => removeReference(ref.id)}
-                          className="reference-thumb__remove"
+                          className={styles["reference-thumb__remove"]}
                           aria-label="Remove reference"
                         >
                           <svg
@@ -1187,7 +1229,7 @@ const DashboardPage: React.FC = () => {
             {activePanel === "storyboard" && (
               <section className="card">
                 <h3 className="card__title">2. Slideshow Story</h3>
-                <div className="sidebar__panel-content">
+                <div className={styles["sidebar__panel-content"]}>
                   <div>
                     <label className="label">Overall Topic</label>
                     <input
@@ -1322,6 +1364,7 @@ const DashboardPage: React.FC = () => {
         planType={planType}
         paymentUrls={stripePlanLinks}
         onPlanSelect={(plan) => setPlanType(plan)}
+        userId={session?.user?.id}
       />
     </div>
   );

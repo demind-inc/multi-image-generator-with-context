@@ -1,6 +1,6 @@
 import React from "react";
 import { AuthStatus } from "../../types";
-import "./AuthShell.scss";
+import styles from "./AuthShell.module.scss";
 
 interface AuthShellProps {
   authEmail: string;
@@ -32,8 +32,8 @@ const AuthShell: React.FC<AuthShellProps> = ({
   onSignUp,
 }) => {
   return (
-    <div className="auth-shell">
-      <div className="auth-card card card--gradient">
+    <div className={styles["auth-shell"]}>
+      <div className={`${styles["auth-card"]} card card--gradient`}>
         <div className="brand">
           <div className="brand__icon">
             <svg
@@ -55,17 +55,17 @@ const AuthShell: React.FC<AuthShellProps> = ({
           <h1 className="brand__title">NanoGen AI</h1>
         </div>
 
-        <h2 className="auth-card__title">
+        <h2 className={styles["auth-card__title"]}>
           {isSignUpMode ? "Create your account" : "Sign in to your account"}
         </h2>
-        <p className="auth-card__subtitle">
+        <p className={styles["auth-card__subtitle"]}>
           {isSignUpMode
             ? "Enter your email and password to create an account. We will save your account details into the profiles table when you sign up."
             : "Enter your email and password to sign in. We will save your account details into the profiles table when you sign in."}
         </p>
 
         <form
-          className="auth-form"
+          className={styles["auth-form"]}
           onSubmit={isSignUpMode ? onSignUp : onSignIn}
         >
           <label className="label" htmlFor="auth-email">
@@ -162,10 +162,10 @@ const AuthShell: React.FC<AuthShellProps> = ({
         </div>
 
         {authMessage && (
-          <div className="auth-alert auth-alert--success">{authMessage}</div>
+          <div className={`${styles["auth-alert"]} ${styles["auth-alert--success"]}`}>{authMessage}</div>
         )}
         {authError && (
-          <div className="auth-alert auth-alert--error">{authError}</div>
+          <div className={`${styles["auth-alert"]} ${styles["auth-alert--error"]}`}>{authError}</div>
         )}
         {authStatus === "checking" && !authError && (
           <p className="text text--helper" style={{ marginTop: "12px" }}>

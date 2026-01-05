@@ -5,7 +5,7 @@ import {
   MODEL_NAME,
   TEXT_MODEL_NAME,
   STORYBOARD_SYSTEM_INSTRUCTION,
-} from "../constants.tsx";
+} from "./constants";
 
 export async function generateSlideshowStructure(
   topic: string
@@ -119,7 +119,10 @@ ${prompt}
   }
 }
 
-function normalizeSlides(topic: string, slides: SlideContent[]): SlideContent[] {
+function normalizeSlides(
+  topic: string,
+  slides: SlideContent[]
+): SlideContent[] {
   if (!slides.length) return [];
 
   const cleaned = slides

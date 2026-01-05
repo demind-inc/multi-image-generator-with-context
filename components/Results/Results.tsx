@@ -1,6 +1,6 @@
 import React from "react";
 import { AppMode, SceneResult } from "../../types";
-import "./Results.scss";
+import styles from "./Results.module.scss";
 
 interface ResultsProps {
   mode: AppMode;
@@ -16,19 +16,19 @@ const Results: React.FC<ResultsProps> = ({
   onRegenerate,
 }) => {
   return (
-    <div className="app__results">
-      <div className="results-card">
-        <div className="results-card__header">
+    <div className={styles["app__results"]}>
+      <div className={styles["results-card"]}>
+        <div className={styles["results-card__header"]}>
           <span>
             {mode === "slideshow" ? "Slideshow Timeline" : "Generated Scenes"}
           </span>
-          {isGenerating && <span className="badge">Rendering set...</span>}
+          {isGenerating && <span className={styles.badge}>Rendering set...</span>}
         </div>
 
-        <div className="results-card__body">
+        <div className={styles["results-card__body"]}>
           {results.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state__icon">
+            <div className={styles["empty-state"]}>
+              <div className={styles["empty-state__icon"]}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="40"
@@ -57,21 +57,21 @@ const Results: React.FC<ResultsProps> = ({
               </p>
             </div>
           ) : (
-            <div className="results-scroll custom-scrollbar">
-              <div className="results-list">
+            <div className={`${styles["results-scroll"]} custom-scrollbar`}>
+              <div className={styles["results-list"]}>
                 {results.map((result, idx) => {
                   const isFirstSlide = mode === "slideshow" && idx === 0;
                   return (
                     <div
                       key={idx}
-                      className={`slide-card ${
-                        result.isCTA ? "slide-card--cta" : ""
+                      className={`${styles["slide-card"]} ${
+                        result.isCTA ? styles["slide-card--cta"] : ""
                       }`}
                     >
                       {!result.isCTA && (
-                        <div className="slide-card__media">
+                        <div className={styles["slide-card__media"]}>
                           {result.isLoading ? (
-                            <div className="slide-card__overlay slide-card__overlay--loading">
+                            <div className={`${styles["slide-card__overlay"]} ${styles["slide-card__overlay--loading"]}`}>
                               <div className="spinner" />
                               <p
                                 className="text text--helper"
@@ -85,9 +85,9 @@ const Results: React.FC<ResultsProps> = ({
                               <img
                                 src={result.imageUrl}
                                 alt={`Result ${idx + 1}`}
-                                className="slide-card__image"
+                                className={styles["slide-card__image"]}
                               />
-                              <div className="slide-card__actions">
+                              <div className={styles["slide-card__actions"]}>
                                 <button
                                   onClick={() => onRegenerate(idx)}
                                   className="icon-button"
@@ -134,7 +134,7 @@ const Results: React.FC<ResultsProps> = ({
                               </div>
                             </>
                           ) : result.error ? (
-                            <div className="slide-card__overlay slide-card__overlay--error">
+                            <div className={`${styles["slide-card__overlay"]} ${styles["slide-card__overlay--error"]}`}>
                               <p
                                 className="text text--helper"
                                 style={{ margin: 0, color: "#b91c1c" }}
@@ -142,7 +142,7 @@ const Results: React.FC<ResultsProps> = ({
                                 Error
                               </p>
                               <p
-                                className="slide-card__prompt"
+                                className={styles["slide-card__prompt"]}
                                 style={{
                                   color: "#ef4444",
                                   fontStyle: "italic",
@@ -163,7 +163,7 @@ const Results: React.FC<ResultsProps> = ({
                               </button>
                             </div>
                           ) : (
-                            <div className="slide-card__overlay slide-card__overlay--placeholder">
+                            <div className={`${styles["slide-card__overlay"]} ${styles["slide-card__overlay--placeholder"]}`}>
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="32"
@@ -191,7 +191,7 @@ const Results: React.FC<ResultsProps> = ({
                       )}
 
                       {result.isCTA && (
-                        <div className="cta-placeholder">
+                        <div className={styles["cta-placeholder"]}>
                           <div>
                             <div style={{ marginBottom: "12px" }}>
                               <svg
@@ -215,9 +215,9 @@ const Results: React.FC<ResultsProps> = ({
                         </div>
                       )}
 
-                      <div className="slide-card__meta">
-                        <span className="slide-card__index">{idx + 1}</span>
-                        <h3 className="slide-card__title">
+                      <div className={styles["slide-card__meta"]}>
+                        <span className={styles["slide-card__index"]}>{idx + 1}</span>
+                        <h3 className={styles["slide-card__title"]}>
                           {result.title ||
                             (mode === "manual"
                               ? `Scene ${idx + 1}`
@@ -226,23 +226,23 @@ const Results: React.FC<ResultsProps> = ({
                       </div>
 
                       {!isFirstSlide && result.description && (
-                        <p className="slide-card__description">
+                        <p className={styles["slide-card__description"]}>
                           {result.description}
                         </p>
                       )}
 
                       {mode === "manual" && (
-                        <p className="slide-card__description">
+                        <p className={styles["slide-card__description"]}>
                           {result.prompt}
                         </p>
                       )}
 
                       {!result.isCTA && (
-                        <div className="slide-card__foot">
-                          <div className="slide-card__foot-label">
+                        <div className={styles["slide-card__foot"]}>
+                          <div className={styles["slide-card__foot-label"]}>
                             Character Guidance
                           </div>
-                          <p className="slide-card__foot-text">
+                          <p className={styles["slide-card__foot-text"]}>
                             "{result.prompt}"
                           </p>
                         </div>

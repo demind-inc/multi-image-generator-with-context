@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { AppMode, ImageSize } from "../../types";
-import "./AppHeader.scss";
+import styles from "./AppHeader.module.scss";
 
 interface AppHeaderProps {
   mode: AppMode;
@@ -21,6 +21,7 @@ interface AppHeaderProps {
   freeCreditsRemaining?: number;
   subscriptionLabel?: string;
   subscriptionPrice?: string | null;
+  subscriptionStatus?: string | null;
   onOpenBilling?: () => void;
   onCancelSubscription?: () => void;
 }
@@ -44,6 +45,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   freeCreditsRemaining,
   subscriptionLabel,
   subscriptionPrice,
+  subscriptionStatus,
   onOpenBilling,
   onCancelSubscription,
 }) => {
@@ -70,8 +72,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   }, [isAccountMenuOpen]);
 
   return (
-    <header className="app__header">
-      <div className="app__header-content">
+    <header className={styles["app__header"]}>
+      <div className={styles["app__header-content"]}>
         <div className="brand">
           <div className="brand__icon">
             <img
@@ -83,12 +85,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           <h1 className="brand__title">NanoGen AI</h1>
         </div>
 
-        <div className="mode-toggle">
-          <div className="mode-toggle__inner">
+        <div className={styles["mode-toggle"]}>
+          <div className={styles["mode-toggle__inner"]}>
             <button
               onClick={() => onModeChange("slideshow")}
-              className={`mode-toggle__button ${
-                mode === "slideshow" ? "is-active" : ""
+              className={`${styles["mode-toggle__button"]} ${
+                mode === "slideshow" ? styles["is-active"] : ""
               }`}
               title="Slideshow Mode"
             >
@@ -110,8 +112,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             </button>
             <button
               onClick={() => onModeChange("manual")}
-              className={`mode-toggle__button ${
-                mode === "manual" ? "is-active" : ""
+              className={`${styles["mode-toggle__button"]} ${
+                mode === "manual" ? styles["is-active"] : ""
               }`}
               title="Manual Generation"
             >
@@ -134,8 +136,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
         </div>
 
-        <div className="header-actions">
-          <div className="header-actions__meta">
+        <div className={styles["header-actions"]}>
+          <div className={styles["header-actions__meta"]}>
             <span className="pill pill--ghost" title="Reference images">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -273,10 +275,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             )}
           </button>
           {displayEmail && (
-            <div className="account-menu" ref={accountMenuRef}>
+            <div className={styles["account-menu"]} ref={accountMenuRef}>
               <button
                 onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
-                className="account-menu__trigger"
+                className={styles["account-menu__trigger"]}
                 title="Account menu"
                 aria-label="Account menu"
               >
@@ -297,25 +299,32 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 </svg>
               </button>
               {isAccountMenuOpen && (
-                <div className="account-menu__dropdown">
-                  <div className="account-menu__email">{displayEmail}</div>
-                  <div className="account-menu__subscription">
-                    <p className="account-menu__sub-label">
-                      {subscriptionLabel || (isSubscribed ? "Subscribed" : "Free")}
+                <div className={styles["account-menu__dropdown"]}>
+                  <div className={styles["account-menu__email"]}>
+                    {displayEmail}
+                  </div>
+                  <div className={styles["account-menu__subscription"]}>
+                    <p className={styles["account-menu__sub-label"]}>
+                      {subscriptionLabel ||
+                        (isSubscribed ? "Subscribed" : "Free")}
                     </p>
                     {isSubscribed && subscriptionPrice ? (
-                      <p className="account-menu__sub-price">{subscriptionPrice}</p>
+                      <p className={styles["account-menu__sub-price"]}>
+                        {subscriptionPrice}
+                      </p>
                     ) : (
-                      <p className="account-menu__sub-price">3 credits included</p>
+                      <p className={styles["account-menu__sub-price"]}>
+                        3 credits included
+                      </p>
                     )}
-                    <div className="account-menu__sub-actions">
-                      {isSubscribed ? (
+                    <div className={styles["account-menu__sub-actions"]}>
+                      {isSubscribed && subscriptionStatus !== "unsubscribed" ? (
                         <button onClick={onCancelSubscription}>
                           Cancel subscription
                         </button>
-                      ) : (
+                      ) : !isSubscribed ? (
                         <button onClick={onOpenBilling}>Upgrade</button>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   <button
@@ -323,7 +332,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                       onSignOut();
                       setIsAccountMenuOpen(false);
                     }}
-                    className="account-menu__signout"
+                    className={styles["account-menu__signout"]}
                   >
                     Sign out
                   </button>
