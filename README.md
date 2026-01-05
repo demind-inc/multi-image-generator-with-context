@@ -178,6 +178,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_OMZ0ZGdgsH2MdvJO7Z08f
    STRIPE_PRICE_ID_BASIC=price_xxxxx
    STRIPE_PRICE_ID_PRO=price_xxxxx
    STRIPE_PRICE_ID_BUSINESS=price_xxxxx
+   STRIPE_WEBHOOK_SECRET=xxxxx
 
    # Optional
    NEXT_PUBLIC_BASE_URL=https://yourdomain.com  # For checkout redirect URLs

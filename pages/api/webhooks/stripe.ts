@@ -31,10 +31,16 @@ export default async function handler(
   }
 
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!stripeSecretKey) {
     console.error("STRIPE_SECRET_KEY is not set");
     return res.status(500).json({ error: "Stripe configuration missing" });
+  }
+
+  if (!webhookSecret) {
+    console.error("STRIPE_WEBHOOK_SECRET is not set");
+    return res.status(500).json({ error: "Webhook secret missing" });
   }
 
   const stripeModule = await import("stripe");
@@ -55,7 +61,15 @@ export default async function handler(
       return res.status(400).json({ error: "No stripe-signature header" });
     }
 
-    const event = req.body as Stripe.Event;
+    // Verify webhook signature using STRIPE_WEBHOOK_SECRET
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("Webhook signature verification failed:", err.message);
+      return res.status(401).json({ error: `Webhook Error: ${err.message}` });
+    }
+    console.log("event", event);
 
     // Handle subscription updated event (for expiration checks)
     if (event.type === "customer.subscription.updated") {
@@ -214,8 +228,7 @@ export default async function handler(
       const { error: updateError } = await supabase
         .from("subscriptions")
         .update({
-          status: "unsubscribed",
-          unsubscribed_at: new Date().toISOString(),
+          status: "expired",
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);

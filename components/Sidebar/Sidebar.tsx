@@ -130,7 +130,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       ? subscriptionPrice || "Active"
                       : "3 credits included"}
                   </p>
-                  {expiredAt && (
+                  {isSubscribed && expiredAt && (
                     <p
                       className={styles["sidebar__profile-meta"]}
                       style={{ fontSize: "0.75rem", color: "#ff6b6b" }}
@@ -138,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       Expired: {formatDate(expiredAt)}
                     </p>
                   )}
-                  {unsubscribedAt && (
+                  {isSubscribed && unsubscribedAt && (
                     <p
                       className={styles["sidebar__profile-meta"]}
                       style={{ fontSize: "0.75rem", color: "#ffa500" }}
