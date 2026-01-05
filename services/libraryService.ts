@@ -222,8 +222,7 @@ export async function updatePromptPreset(
 ): Promise<PromptPreset> {
   const supabase = getSupabaseClient();
   const trimmedTitle = title.trim() || DEFAULT_PROMPT_TITLE;
-  const { data, error } = await supabase
-    .from("prompt_library")
+  const { data, error } = await (supabase.from("prompt_library") as any)
     .update({
       title: trimmedTitle,
       prompt_text: content,
@@ -257,8 +256,7 @@ export async function updateReferenceSetLabel(
 ): Promise<void> {
   const supabase = getSupabaseClient();
   const trimmedLabel = label.trim() || DEFAULT_REFERENCE_LABEL;
-  const { error } = await supabase
-    .from("reference_library")
+  const { error } = await (supabase.from("reference_library") as any)
     .update({ label: trimmedLabel } as Partial<ReferenceLibraryInsert>)
     .eq("set_id", setId)
     .eq("user_id", userId);

@@ -1,3 +1,4 @@
+import { Database } from "@/database.types";
 import { SubscriptionPlan } from "../types";
 import { getSupabaseClient } from "./supabaseClient";
 
@@ -32,16 +33,18 @@ export async function getSubscription(
   if (!data) {
     return null;
   }
+  const subscription =
+    data as Database["public"]["Tables"]["subscriptions"]["Row"];
 
   return {
-    userId: data.user_id,
-    isActive: data.is_active ?? false,
-    stripeSubscriptionId: data.stripe_subscription_id,
-    stripeCustomerId: data.stripe_customer_id,
-    currentPeriodEnd: data.current_period_end,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    planType: (data.plan_type as SubscriptionPlan | null) ?? null,
+    userId: subscription.user_id,
+    isActive: subscription.is_active ?? false,
+    stripeSubscriptionId: subscription.stripe_subscription_id,
+    stripeCustomerId: subscription.stripe_customer_id,
+    currentPeriodEnd: subscription.current_period_end,
+    createdAt: subscription.created_at,
+    updatedAt: subscription.updated_at,
+    planType: (subscription.plan_type as SubscriptionPlan | null) ?? null,
   };
 }
 
@@ -89,16 +92,18 @@ export async function createOrUpdateSubscription(
     // If still no data, throw an error
     throw new Error("Failed to create or retrieve subscription");
   }
+  const subscription =
+    data as Database["public"]["Tables"]["subscriptions"]["Row"];
 
   return {
-    userId: data.user_id,
-    isActive: data.is_active ?? false,
-    stripeSubscriptionId: data.stripe_subscription_id,
-    stripeCustomerId: data.stripe_customer_id,
-    currentPeriodEnd: data.current_period_end,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    planType: (data.plan_type as SubscriptionPlan | null) ?? null,
+    userId: subscription?.user_id,
+    isActive: subscription?.is_active ?? false,
+    stripeSubscriptionId: subscription.stripe_subscription_id,
+    stripeCustomerId: subscription.stripe_customer_id,
+    currentPeriodEnd: subscription.current_period_end,
+    createdAt: subscription.created_at,
+    updatedAt: subscription.updated_at,
+    planType: (subscription?.plan_type as SubscriptionPlan | null) ?? null,
   };
 }
 

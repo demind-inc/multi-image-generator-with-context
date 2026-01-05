@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "./supabaseClient";
 import { AccountProfile } from "../types";
+import type { Database } from "../database.types";
 
 export async function getCurrentSession() {
   const supabase = getSupabaseClient();
@@ -32,29 +33,29 @@ export async function upsertProfile(sessionUser: {
         email: sessionUser.email ?? null,
         full_name,
         last_sign_in_at: new Date().toISOString(),
-      },
+      } as any,
       { onConflict: "id" }
     )
     .select()
     .single();
 
-  // If id is bigint, try using user_id instead
+  // If id is bigint, try using user_id instead (fallback for different schema)
   if (
     result.error &&
     (result.error.message?.includes("bigint") ||
       result.error.message?.includes("invalid input syntax"))
   ) {
+    // Use type assertion for fallback schema that may have user_id
+    const fallbackData = {
+      user_id: sessionUser.id,
+      email: sessionUser.email ?? null,
+      full_name,
+      last_sign_in_at: new Date().toISOString(),
+    } as any;
+
     result = await supabase
       .from("profiles")
-      .upsert(
-        {
-          user_id: sessionUser.id,
-          email: sessionUser.email ?? null,
-          full_name,
-          last_sign_in_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      )
+      .upsert(fallbackData, { onConflict: "user_id" })
       .select()
       .single();
   }
@@ -88,7 +89,10 @@ export async function getHasGeneratedFreeImage(
     return false;
   }
 
-  return data?.has_generated_free_image ?? false;
+  return (
+    (data as unknown as Database["public"]["Tables"]["profiles"]["Row"])
+      ?.has_generated_free_image ?? false
+  );
 }
 
 export async function setHasGeneratedFreeImage(
@@ -97,8 +101,7 @@ export async function setHasGeneratedFreeImage(
 ): Promise<void> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase
-    .from("profiles")
+  const { error } = await (supabase.from("profiles") as any)
     .update({ has_generated_free_image: value })
     .eq("id", userId);
 
