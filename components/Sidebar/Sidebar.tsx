@@ -5,6 +5,14 @@ import styles from "./Sidebar.module.scss";
 
 export type PanelKey = "saved" | "references" | "storyboard" | "manual";
 
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const day = date.getDate();
+  return `${year} ${month} ${day}`;
+};
+
 interface SidebarProps {
   mode: AppMode;
   onModeChange: (mode: AppMode) => void;
@@ -20,6 +28,7 @@ interface SidebarProps {
   totalCredits?: number;
   expiredAt?: string | null;
   unsubscribedAt?: string | null;
+  subscriptionStatus?: string | null;
   onOpenBilling?: () => void;
   onCancelSubscription?: () => void;
   onSignOut: () => void;
@@ -40,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   totalCredits,
   expiredAt,
   unsubscribedAt,
+  subscriptionStatus,
   onOpenBilling,
   onCancelSubscription,
   onSignOut,
@@ -121,23 +131,29 @@ const Sidebar: React.FC<SidebarProps> = ({
                       : "3 credits included"}
                   </p>
                   {expiredAt && (
-                    <p className={styles["sidebar__profile-meta"]} style={{ fontSize: "0.75rem", color: "#ff6b6b" }}>
-                      Expired: {new Date(expiredAt).toLocaleDateString()}
+                    <p
+                      className={styles["sidebar__profile-meta"]}
+                      style={{ fontSize: "0.75rem", color: "#ff6b6b" }}
+                    >
+                      Expired: {formatDate(expiredAt)}
                     </p>
                   )}
                   {unsubscribedAt && (
-                    <p className={styles["sidebar__profile-meta"]} style={{ fontSize: "0.75rem", color: "#ffa500" }}>
-                      Unsubscribed: {new Date(unsubscribedAt).toLocaleDateString()}
+                    <p
+                      className={styles["sidebar__profile-meta"]}
+                      style={{ fontSize: "0.75rem", color: "#ffa500" }}
+                    >
+                      Unsubscribed: {formatDate(unsubscribedAt)}
                     </p>
                   )}
                   <div className={styles["sidebar__profile-actions"]}>
-                    {isSubscribed ? (
+                    {isSubscribed && subscriptionStatus !== "unsubscribed" ? (
                       <button onClick={onCancelSubscription}>
                         Cancel subscription
                       </button>
-                    ) : (
+                    ) : !isSubscribed ? (
                       <button onClick={onOpenBilling}>Upgrade</button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
                 <button

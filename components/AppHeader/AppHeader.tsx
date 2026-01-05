@@ -21,6 +21,7 @@ interface AppHeaderProps {
   freeCreditsRemaining?: number;
   subscriptionLabel?: string;
   subscriptionPrice?: string | null;
+  subscriptionStatus?: string | null;
   onOpenBilling?: () => void;
   onCancelSubscription?: () => void;
 }
@@ -44,6 +45,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   freeCreditsRemaining,
   subscriptionLabel,
   subscriptionPrice,
+  subscriptionStatus,
   onOpenBilling,
   onCancelSubscription,
 }) => {
@@ -316,13 +318,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                       </p>
                     )}
                     <div className={styles["account-menu__sub-actions"]}>
-                      {isSubscribed ? (
+                      {isSubscribed && subscriptionStatus !== "unsubscribed" ? (
                         <button onClick={onCancelSubscription}>
                           Cancel subscription
                         </button>
-                      ) : (
+                      ) : !isSubscribed ? (
                         <button onClick={onOpenBilling}>Upgrade</button>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   <button

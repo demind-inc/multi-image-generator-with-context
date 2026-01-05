@@ -84,6 +84,7 @@ export default async function handler(
     }
 
     // Cancel subscription in Stripe
+    let expiredAt: string | null = null;
     try {
       const canceledSubscription = await stripe.subscriptions.update(
         subscription.stripe_subscription_id,
@@ -91,6 +92,13 @@ export default async function handler(
           cancel_at_period_end: true,
         }
       );
+
+      // Set expired_at to the current_period_end from Stripe response
+      if (canceledSubscription.current_period_end) {
+        expiredAt = new Date(
+          canceledSubscription.current_period_end * 1000
+        ).toISOString();
+      }
     } catch (stripeError: any) {
       // If subscription is already canceled or doesn't exist in Stripe,
       // still update our database
@@ -101,6 +109,10 @@ export default async function handler(
         console.warn(
           `Subscription ${subscription.stripe_subscription_id} not found in Stripe, updating database only`
         );
+        // Use existing current_period_end from database if available
+        if (subscription.current_period_end) {
+          expiredAt = subscription.current_period_end;
+        }
       } else {
         console.error("Failed to cancel subscription in Stripe:", stripeError);
         return res.status(500).json({
@@ -111,13 +123,20 @@ export default async function handler(
     }
 
     // Update database to mark subscription as unsubscribed
+    const updateData: any = {
+      status: "unsubscribed",
+      unsubscribed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Set expired_at if we have it from Stripe response or database
+    if (expiredAt) {
+      updateData.expired_at = expiredAt;
+    }
+
     const { error: updateError } = await supabase
       .from("subscriptions")
-      .update({
-        status: "unsubscribed",
-        unsubscribed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("user_id", userId);
 
     if (updateError) {

@@ -278,7 +278,10 @@ const DashboardPage: React.FC = () => {
     try {
       const subscription = await getSubscription(userId);
       setSubscription(subscription);
-      setIsPaymentUnlocked(subscription?.isActive ?? false);
+      // User has access if subscription is active OR unsubscribed (until period ends)
+      const hasAccess = subscription?.isActive ?? false;
+      setIsPaymentUnlocked(hasAccess);
+      // Keep plan type if subscription exists (even if unsubscribed, they still have access)
       if (subscription?.planType) {
         setPlanType(subscription.planType);
         setPlanLockedFromSubscription(true);
@@ -1000,6 +1003,7 @@ const DashboardPage: React.FC = () => {
             totalCredits={hasSubscription ? displayUsageLimit : undefined}
             expiredAt={subscription?.expiredAt || null}
             unsubscribedAt={subscription?.unsubscribedAt || null}
+            subscriptionStatus={subscription?.status || null}
             onOpenBilling={() => setIsPaymentModalOpen(true)}
             onCancelSubscription={async () => {
               const userId = session?.user?.id;

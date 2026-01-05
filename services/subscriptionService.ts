@@ -39,9 +39,21 @@ export async function getSubscription(
   const subscription =
     data as Database["public"]["Tables"]["subscriptions"]["Row"];
 
+  // User has access if status is "active" or "unsubscribed" (until period ends)
+  // Check if period has ended for unsubscribed subscriptions
+  let isActive = subscription.status === "active";
+  if (
+    subscription.status === "unsubscribed" &&
+    subscription.current_period_end
+  ) {
+    const periodEnd = new Date(subscription.current_period_end);
+    const now = new Date();
+    isActive = now <= periodEnd; // Still active if period hasn't ended
+  }
+
   return {
     userId: subscription.user_id,
-    isActive: subscription.status === "active",
+    isActive,
     stripeSubscriptionId: subscription.stripe_subscription_id,
     stripeCustomerId: subscription.stripe_customer_id,
     currentPeriodEnd: subscription.current_period_end,
