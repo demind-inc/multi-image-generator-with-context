@@ -84,8 +84,11 @@ export default async function handler(
 
     // Cancel subscription in Stripe
     try {
-      const canceledSubscription = await stripe.subscriptions.cancel(
-        subscription.stripe_subscription_id
+      const canceledSubscription = await stripe.subscriptions.update(
+        subscription.stripe_subscription_id,
+        {
+          cancel_at_period_end: true,
+        }
       );
     } catch (stripeError: any) {
       // If subscription is already canceled or doesn't exist in Stripe,
