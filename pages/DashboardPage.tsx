@@ -244,15 +244,6 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const refreshPromptLibrary = async (userId: string) => {
-    try {
-      const prompts = await fetchPromptLibrary(userId);
-      setPromptLibrary(prompts);
-    } catch (error) {
-      console.error("Failed to refresh prompt library:", error);
-    }
-  };
-
   const refreshSubscription = async (userId: string) => {
     setIsSubscriptionLoading(true);
     try {
