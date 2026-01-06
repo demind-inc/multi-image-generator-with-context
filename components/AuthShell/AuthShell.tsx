@@ -52,7 +52,7 @@ const AuthShell: React.FC<AuthShellProps> = ({
               />
             </svg>
           </div>
-          <h1 className="brand__title">NanoGen AI</h1>
+          <h1 className="brand__title">StoryboardGen</h1>
         </div>
 
         <h2 className={styles["auth-card__title"]}>

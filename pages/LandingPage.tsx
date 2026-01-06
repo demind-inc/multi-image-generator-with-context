@@ -211,12 +211,12 @@ const LandingPage: React.FC = () => {
           <div className="brand__icon">
             <img
               src="/assets/images/logo.png"
-              alt="NanoGen AI Logo"
+              alt="StoryboardGen Logo"
               className="brand__icon-image"
             />
           </div>
           <div className="brand__text">
-            <p className="brand__title">NanoGen AI</p>
+            <p className="brand__title">StoryboardGen</p>
             <div className="brand__subtitle">
               <span className="brand__eyebrow">Scene aware</span>
               <span className="brand__subtitle-text">
@@ -255,10 +255,9 @@ const LandingPage: React.FC = () => {
         <section className="landing__hero">
           <div className="landing__hero-copy">
             <div className="landing__badge">Scene-consistent illustration</div>
-            <h1>Same character. Same illustration. New scenes in one click.</h1>
+            <h1>AI Storyboard Generator</h1>
             <p className="landing__lead">
-              Generate matching scenes without re-uploading references or
-              copy-pasting prompts. We carry your character across every scene.
+              Turn prompts into consistent AI-generated storyboards.
             </p>
             <div className="landing__cta">
               <button className="primary-button" onClick={handleStart}>

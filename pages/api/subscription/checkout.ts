@@ -68,13 +68,13 @@ export default async function handler(
       ],
       client_reference_id: userId,
       metadata: {
-        app: "nanogenai",
+        app: "storyboardgen",
         plan: plan,
         user_id: userId,
       },
       subscription_data: {
         metadata: {
-          app: "nanogenai",
+          app: "storyboardgen",
           plan: plan,
         },
       },

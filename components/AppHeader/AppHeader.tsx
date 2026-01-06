@@ -78,11 +78,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           <div className="brand__icon">
             <img
               src="/assets/images/logo.png"
-              alt="NanoGen AI Logo"
+              alt="StoryboardGen Logo"
               className="brand__icon-image"
             />
           </div>
-          <h1 className="brand__title">NanoGen AI</h1>
+          <h1 className="brand__title">StoryboardGen</h1>
         </div>
 
         <div className={styles["mode-toggle"]}>

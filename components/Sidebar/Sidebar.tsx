@@ -83,13 +83,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="brand__icon">
             <img
               src="/assets/images/logo.png"
-              alt="NanoGen AI Logo"
+              alt="StoryboardGen Logo"
               className="brand__icon-image"
             />
           </div>
           <div className="brand__text">
             <p className="brand__eyebrow">Workspace</p>
-            <h3 className="brand__title">NanoGen AI</h3>
+            <h3 className="brand__title">StoryboardGen</h3>
           </div>
         </div>
         <div className={styles["sidebar__header-actions"]}>

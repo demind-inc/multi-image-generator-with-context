@@ -85,7 +85,7 @@ export default async function handler(
     const appMetadata = metadata.app;
 
     // Verify this is from our app
-    if (appMetadata && appMetadata !== "nanogenai") {
+    if (appMetadata && appMetadata !== "storyboardgen") {
       console.warn(
         `Unexpected app metadata in checkout session ${checkoutSession.id}: ${appMetadata}`
       );

@@ -1,5 +1,5 @@
 {
-  "name": "NanoGen AI",
-  "description": "Generate a series of images featuring the same character across different scenes using strict visual references and Gemini 3 Pro Image Preview.",
+  "name": "StoryboardGen - AI Storyboard Generator",
+  "description": "Turn prompts into consistent AI-generated storyboards.",
   "requestFramePermissions": []
 }

@@ -74,8 +74,8 @@ export default async function handler(
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
 
-      // Only process events where metadata.app = "nanogenai"
-      if (subscription.metadata?.app !== "nanogenai") {
+      // Only process events where metadata.app = "storyboardgen"
+      if (subscription.metadata?.app !== "storyboardgen") {
         return res.json({ received: true });
       }
 
@@ -184,8 +184,8 @@ export default async function handler(
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
 
-      // Only process events where metadata.app = "nanogenai"
-      if (subscription.metadata?.app !== "nanogenai") {
+      // Only process events where metadata.app = "storyboardgen"
+      if (subscription.metadata?.app !== "storyboardgen") {
         return res.json({ received: true });
       }
 
