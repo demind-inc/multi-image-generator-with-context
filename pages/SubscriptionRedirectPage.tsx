@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "../providers/AuthProvider";
 import { SubscriptionPlan } from "../types";
 import { getMonthlyUsage } from "../services/usageService";
+import { trackSubscriptionCompleted } from "../lib/analytics";
 import styles from "./SubscriptionRedirectPage.module.scss";
 
 const SubscriptionRedirectPage: React.FC = () => {
@@ -91,8 +92,23 @@ const SubscriptionRedirectPage: React.FC = () => {
         const syncedSubscription = result.subscription;
 
         // Success! Subscription synced
-        setPlanType(syncedSubscription.plan_type || plan);
+        const finalPlan = syncedSubscription.plan_type || plan;
+        setPlanType(finalPlan);
         setStatus("success");
+
+        // Track successful subscription completion
+        if (finalPlan) {
+          // Map plan to price for tracking
+          const planPrices: Record<SubscriptionPlan, number> = {
+            basic: 9,
+            pro: 29,
+            business: 79,
+          };
+          trackSubscriptionCompleted(
+            finalPlan as SubscriptionPlan,
+            planPrices[finalPlan as SubscriptionPlan]
+          );
+        }
 
         // Refresh usage to reflect new subscription
         if (syncedSubscription.plan_type) {

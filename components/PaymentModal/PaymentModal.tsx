@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { SubscriptionPlan } from "../../types";
+import { trackSubscriptionInitiated } from "../../lib/analytics";
 import styles from "./PaymentModal.module.scss";
 
 interface PaymentModalProps {
@@ -25,6 +26,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handlePlanClick = async (plan: SubscriptionPlan) => {
     onPlanSelect?.(plan);
+
+    // Track subscription initiation
+    trackSubscriptionInitiated(plan);
 
     // If userId is provided, use the new Checkout Session API
     if (userId) {
@@ -184,7 +188,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                         href={planUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => onPlanSelect?.(planOption.plan)}
+                        onClick={() => {
+                          onPlanSelect?.(planOption.plan);
+                        }}
                       >
                         Choose {planOption.badge}
                       </a>

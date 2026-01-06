@@ -43,6 +43,12 @@ import ReferenceLibraryModal from "../components/DatasetModal/ReferenceLibraryMo
 import PromptLibraryModal from "../components/DatasetModal/PromptLibraryModal";
 import SavedImagesPanel from "../components/Library/SavedImagesPanel";
 import SavedPromptsPanel from "../components/Library/SavedPromptsPanel";
+import {
+  trackImageGeneration,
+  trackImageRegeneration,
+  trackStoryboardGeneration,
+  trackButtonClick,
+} from "../lib/analytics";
 
 interface NameCaptureModalProps {
   isOpen: boolean;
@@ -271,7 +277,8 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const [subscription, setSubscription] = React.useState<Awaited<ReturnType<typeof getSubscription>>>(null);
+  const [subscription, setSubscription] =
+    React.useState<Awaited<ReturnType<typeof getSubscription>>>(null);
 
   const refreshSubscription = async (userId: string) => {
     setIsSubscriptionLoading(true);
@@ -630,6 +637,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const openPaymentModal = () => {
+    trackButtonClick("open_payment_modal");
     setIsPaymentModalOpen(true);
   };
 
@@ -666,6 +674,7 @@ const DashboardPage: React.FC = () => {
       alert("Please enter a topic first.");
       return;
     }
+    trackStoryboardGeneration(topic);
     setIsCreatingStoryboard(true);
     try {
       const slides = await generateSlideshowStructure(topic);
@@ -705,6 +714,9 @@ const DashboardPage: React.FC = () => {
       alert("Unable to verify your account. Please sign in again.");
       return;
     }
+
+    // Track regeneration event
+    trackImageRegeneration(mode, index);
 
     const setter =
       mode === "slideshow" ? setSlideshowResults : setManualResults;
@@ -851,6 +863,12 @@ const DashboardPage: React.FC = () => {
         return;
       }
     }
+
+    // Track generation event
+    trackImageGeneration(mode, scenesToGenerate, {
+      references_count: references.length,
+      image_size: size,
+    });
 
     setIsGenerating(true);
 
